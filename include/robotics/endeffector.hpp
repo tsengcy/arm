@@ -4,15 +4,44 @@
 #include <iostream>
 #include <memory>
 #include "robotics/frame.hpp"
+#include "robotics/utils.hpp"
 
-class endeffector
+extern int EEId;
+
+template<typename T>
+class EndEffector
 {
 public:
-    endeffector(std::shared_ptr<Framef>);
+    EndEffector(std::shared_ptr<Frame<T>> frame, Eigen::Matrix<T, 4, 4> trans);
+
+    Eigen::Matrix<T, 4, 4> get_GlobalPose();
+
+    Eigen::Matrix<T, -1, 1> get_GlobalPosOri();
+
+    Eigen::Matrix<T, 3, 1> get_GlobalPos();
+
+    int get_Id(){return mnid;}
 
 private:
-    std::shared_ptr<Framef> mpFrame;
+    void update();
+
+private:
+    std::weak_ptr<Frame<T>> mpFrame;
+    
+    Eigen::Matrix<T, 4, 4> mTFrame2EE;
+
+    Eigen::Matrix<T, 4, 4> mTGlobal;
+
+    int mnid;
 };
+
+template class EndEffector<float>;
+template class EndEffector<double>;
+
+using EndEffectorf = EndEffector<float>;
+using EndEffectord = EndEffector<double>;
+
+
 
 
 #endif // __ENDEFFECTOR_HPP_

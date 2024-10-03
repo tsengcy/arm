@@ -7,23 +7,62 @@
 #include <memory>
 #include <vector>
 
+#include <robotics/utils.hpp>
 
-int nId = 0;
+enum DH
+{
+    TRADITIONAL = 0,
+    MODIFIED = 1
+};
+
+enum FRAMETYPE
+{
+    ACTIVE = 0,
+    PASSIVE = 1,
+    CONSTANT = 2
+};
+
+
+extern int FrameId;
+extern int ActiveFrameId;
+extern int PassiveFrameId;
 
 template<typename T>
 class Frame : public std::enable_shared_from_this<Frame<T>>
 {
 public:
     /** constructor of frame by using modified dh parameter */
-    Frame(T _a, T _alpha, T _d, T _theta, std::shared_ptr<Frame<T>> _parent = nullptr);
+    Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype,
+          T _upperLimit, T _lowerLimit, std::shared_ptr<Frame<T>> _parent);
+    
+    ~Frame();
     
     /** set angle*/
-    void set_Angle(float _angle);
+    void set_Angle(T _angle);
 
-    /** get Pose */
+    /** set angle for passive frame */
+    void set_Angle();
+
+    T get_Angle();
+
+    /** update frame */
+    void update();
+
+    void set_PassiveRefFrame(T _rate, std::shared_ptr<Frame<T>> _refFrame);
+
+    /** @brief get local Pose */
     Eigen::Matrix<T, 4, 4> get_LocalPose();
 
-    Eigen::Matrix<T, 4, 4> get_globalPose();
+    Eigen::Matrix<T, -1, 1> get_LocalPosOri();
+
+    Eigen::Matrix<T, 3, 1> get_LocalPos();
+
+    /** @brief get global Pose */
+    Eigen::Matrix<T, 4, 4> get_GlobalPose();
+
+    Eigen::Matrix<T, -1, 1> get_GlobalPosOri();
+
+    Eigen::Matrix<T, 3, 1> get_GlobalPos();
 
     void property();
 
@@ -33,11 +72,9 @@ public:
 
     int get_Id(){return mnid;}
 
-    /** setter for DH parameter*/
-    void set_a(T _a){ma = _a;}
-    void set_d(T _d){md = _d;}
-    void set_theta(T _theta){mtheta = _theta;}
-    void set_alpha(T _alpha){malpha = _alpha;}
+    int get_JointId(){return mnJointId;}
+
+    FRAMETYPE get_FrameType(){return mframetype;}
 
     /** getter for DH parameter*/
     T get_a(){return ma;}
@@ -50,18 +87,33 @@ private:
     Eigen::Matrix<T, 4, 4> mlocal;
     Eigen::Matrix<T, 4, 4> mglobal;
     Eigen::Matrix<T, 4, 4> mbase;
+
+    /** @brief DH type */
+    DH mDHtype;
+
+    /** @brief frame type */
+    FRAMETYPE mframetype;
+
+    /** @brief reference frame */
+    std::weak_ptr<Frame<T>> mpRef;
+    float mPassiveRate;
     
     /** @brief DH parameter */
-    T ma;
-    T malpha;
-    T md;
-    T mtheta;
+    const T ma;
+    const T malpha;
+    const T md;
+    const T mtheta;
 
     /** @brief current angle */
     T mangle{0};
 
+    /** @brief joint limit */
+    T mupperLimit;
+    T mlowerLimit;
+
     /** @brief id of frame */
     int mnid;
+    int mnJointId;
 
     /** @brief pointer to children*/
     std::vector<std::shared_ptr<Frame<T>>> mvpChildren;
