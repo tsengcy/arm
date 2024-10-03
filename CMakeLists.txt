@@ -9,6 +9,8 @@ include_directories(
 )
 
 
+add_definitions(-DDEBUG)
+
 find_package(Eigen3)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -19,14 +21,20 @@ add_library(tmpf SHARED
 )
 
 add_library(robotics SHARED
+    include/robotics/robotarm.hpp
+    src/robotics/robotarm.cpp
+    include/robotics/endeffector.hpp
+    src/robotics/endeffector.cpp
     include/robotics/frame.hpp
     src/robotics/frame.cpp
+    include/robotics/utils.hpp
+
 )
 
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
-add_definitions(-DDEBUG)
+
 
 add_executable(tmpmain 
     src/tmp/main.cpp

@@ -1,17 +1,35 @@
 #include <robotics/frame.hpp>
 
-extern int nId;
+int FrameId = 0;
+int ActiveFrameId = 0;
+int PassiveFrameId = 0;
 
 template<typename T>
-Frame<T>::Frame(T _a, T _alpha, T _d, T _theta, std::shared_ptr<Frame<T>> _parent) : ma(_a), malpha(_alpha), md(_d), mtheta(_theta)
+Frame<T>::Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype, 
+                T _upperLimit, T _lowerLimit, std::shared_ptr<Frame<T>> _parent) 
+                : ma(_a), malpha(_alpha), md(_d), mtheta(_theta), mDHtype(_DHtype),
+                  mframetype(_frametype), mupperLimit(_upperLimit), mlowerLimit(_lowerLimit)
 {
-    mnid = nId++;
+    mnid = FrameId++;
+
+    if(_frametype == FRAMETYPE::ACTIVE)
+    {
+        mnJointId = ActiveFrameId++;
+    }
+    else if(_frametype == FRAMETYPE::PASSIVE)
+    {
+        mnJointId = PassiveFrameId++;
+    }
+    else
+    {
+        mnJointId = mnid - ActiveFrameId - PassiveFrameId;
+    }
 
     if(_parent != nullptr)
     {
 #ifdef DEBUG
         std::cout << mnid << ": Debug" << std::endl;
-#endif 
+#endif
         mpParent = _parent;
         // _parent->set_Child(this->shared_from_this());
     }
@@ -19,23 +37,107 @@ Frame<T>::Frame(T _a, T _alpha, T _d, T _theta, std::shared_ptr<Frame<T>> _paren
     {
         mbase = Eigen::Matrix<T, 4, 4>::Identity();
     }
-    set_Angle(0);
+    mangle = 0;
 }
 
 template<typename T>
-void Frame<T>::set_Angle(float _angle)
+Frame<T>::~Frame()
 {
-    mangle = _angle;
-    mlocal << cos(mtheta+mangle)            ,            -sin(mtheta+mangle),            0,              ma,
-             sin(mtheta+mangle)*cos(malpha), cos(mtheta+mangle)*cos(malpha), -sin(malpha), -md*sin(malpha),
-             sin(mtheta+mangle)*sin(malpha), cos(mtheta+mangle)*sin(malpha),  cos(malpha),  md*cos(malpha),
-                                          0,                              0,            0,               1;
+    std::cout << "reset id: " << mnid << std::endl;
+    for(auto &ptr : mvpChildren)
+    {
+        ptr.reset();
+    }
+}
+
+template<typename T>
+void Frame<T>::set_Angle(T _angle)
+{
+    if(mframetype == FRAMETYPE::ACTIVE)
+        mangle = _angle;
+    else
+    {
+        std::stringstream ss;
+        ss << "ERROR: frame " << mnid << " call a wrong set angle method\n";
+        throw std::invalid_argument(ss.str());
+    }
+}
+
+template<typename T>
+void Frame<T>::set_Angle()
+{
+    if(mframetype == FRAMETYPE::PASSIVE)
+    {
+        if(mpRef.lock() == nullptr)
+        {
+            std::stringstream ss;
+            ss << "ERROR: frame " << mnid << " do not set reference frame\n";
+            throw std::invalid_argument(ss.str());
+        }
+        else
+            mangle = mPassiveRate * mpRef.lock()->get_Angle();
+    }
+    else
+    {
+        std::stringstream ss;
+        ss << "ERROR: frame " << mnid << " call a wrong set angle method\n";
+        throw std::invalid_argument(ss.str());
+    }
+}
+
+template<typename T>
+T Frame<T>::get_Angle()
+{
+    return mangle;
+}
+
+template<typename T>
+void Frame<T>::update()
+{
     if(!isRoot())
     {
-        mbase = mpParent.lock()->get_globalPose();
+        mbase = mpParent.lock()->get_GlobalPose();
     }
 
+    if(mDHtype == DH::MODIFIED)
+    {
+        mlocal <<             cos(mtheta+mangle),            -sin(mtheta+mangle),            0,              ma,
+                  sin(mtheta+mangle)*cos(malpha), cos(mtheta+mangle)*cos(malpha), -sin(malpha), -md*sin(malpha),
+                  sin(mtheta+mangle)*sin(malpha), cos(mtheta+mangle)*sin(malpha),  cos(malpha),  md*cos(malpha),
+                                               0,                              0,            0,               1;
+    }
+    else
+    {
+        mlocal << cos(mtheta+mangle), -sin(mtheta+mangle)*cos(malpha),  sin(mtheta+mangle)*sin(malpha),  ma*cos(mtheta+mangle),
+                  sin(mtheta+mangle),  cos(mtheta+mangle)*cos(malpha), -cos(mtheta+mangle)*sin(malpha), -ma*sin(mtheta+mangle),
+                                   0,                     sin(malpha),                     cos(malpha),         md*cos(malpha),
+                                   0,                               0,                               0,                      1;
+    }
+    
     mglobal = mbase * mlocal;
+    for(auto &child : mvpChildren)
+    {
+        child->update();
+    }
+}
+
+template<typename T>
+void Frame<T>::set_PassiveRefFrame(T _rate, std::shared_ptr<Frame<T>> _refFrame)
+{
+    if(mframetype != FRAMETYPE::PASSIVE)
+    {
+        std::stringstream ss;
+        ss << "Frame: " << mnid << " is not a passive frame, can not set a passive reference frame\n";
+        throw std::invalid_argument(ss.str());
+    }
+    else
+    {
+        mPassiveRate = _rate;
+        mpRef = _refFrame;
+#ifdef DEBUG
+        std::cout << "set reference frame for passive frame" << std::endl;
+#endif
+    }
 }
 
 template<typename T>
@@ -45,9 +147,33 @@ Eigen::Matrix<T, 4, 4> Frame<T>::get_LocalPose()
 }
 
 template<typename T>
-Eigen::Matrix<T, 4, 4> Frame<T>::get_globalPose()
+Eigen::Matrix<T, -1, 1> Frame<T>::get_LocalPosOri()
+{
+    return mathfunction::PoseToPosOri(mlocal);
+}
+
+template<typename T>
+Eigen::Matrix<T, 3, 1> Frame<T>::get_LocalPos()
+{
+    return mathfunction::PoseToPos(mlocal);
+}
+
+template<typename T>
+Eigen::Matrix<T, 4, 4> Frame<T>::get_GlobalPose()
 {
     return mglobal;
+}
+
+template<typename T>
+Eigen::Matrix<T, -1, 1> Frame<T>::get_GlobalPosOri()
+{
+    return mathfunction::PoseToPosOri(mglobal);
+}
+
+template<typename T>
+Eigen::Matrix<T, 3, 1> Frame<T>::get_GlobalPos()
+{
+    return mathfunction::PoseToPos(mglobal);
 }
 
 template<typename T>
