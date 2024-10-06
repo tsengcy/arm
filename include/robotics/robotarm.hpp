@@ -13,19 +13,30 @@ template<typename T>
 class RobotArm
 {
 public:
+    RobotArm();
+
     RobotArm(std::vector<T> _va, std::vector<T> _valpha, std::vector<T> _vd, std::vector<T> _vtheta, 
             std::vector<T> _vupperLimit, std::vector<T> _vlowerLimit, std::vector<int> _vparentId, DH _DHtype,
             std::vector<FRAMETYPE> _vFrametype, std::vector<Eigen::Matrix<T, 4, 4>> _vTFrame2EE, std::vector<int> _vEEparent);
 
-    void set_Angle(Eigen::Matrix<T, -1, 1> _angle);
+    void set_q(Eigen::Matrix<T, -1, 1> _q);
 
-    void set_Angle(std::vector<T> _angle);
+    void set_q(std::vector<T> _q);
 
-    Eigen::Matrix<T, -1, 1> get_ActiveAngle();
+    void set_qd(Eigen::Matrix<T, -1, 1> _qd);
 
-    Eigen::Matrix<T, -1, 1> get_PassiveAngle();
+    void set_qd(std::vector<T> _qd);
 
-    Eigen::Matrix<T, -1, 1> get_Angle();
+    void set_qdd(Eigen::Matrix<T, -1, 1> _qdd);
+
+    void set_qdd(std::vector<T> _qdd);
+
+
+    Eigen::Matrix<T, -1, 1> get_Activeq();
+
+    Eigen::Matrix<T, -1, 1> get_Passiveq();
+
+    Eigen::Matrix<T, -1, 1> get_q();
 
     Eigen::Matrix<T, -1, -1> get_EEPose();
 
@@ -34,12 +45,12 @@ public:
     Eigen::Matrix<T, -1, 1> get_EEPos();
 
     void property();
-private:
-    void insert_Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype, T _upperLimit, T _lowerLimit, int _parentId);
+protected:
+    int insert_Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype, T _upperLimit, T _lowerLimit, int _parentId);
 
     void insert_endeffector(Eigen::Matrix<T, 4, 4> _TFrame2EE, int _EEparent);
 
-private:
+protected:
     std::shared_ptr<Frame<T>> mpRoot;
 
     std::vector<std::weak_ptr<Frame<T>>> mvpActiveFrame;

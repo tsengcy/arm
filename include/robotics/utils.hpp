@@ -30,7 +30,13 @@ namespace mathfunction
     Eigen::Matrix<T, 4, 4> se3ToSE3(Eigen::Matrix<T, -1, 1> se);
 
     template<typename T>
-    Eigen::Matrix<T, -1, 1> SE3TOse3(Eigen::Matrix<T, 4, 4> SE);
+    Eigen::Matrix<T, -1, 1> SE3Tose3(Eigen::Matrix<T, 4, 4> SE);
+
+    template<typename T>
+    void se3ToScrew(Eigen::Matrix<T, -1, 1> se, Eigen::Matrix<T, -1, 1>& Screw, T& theta);
+
+    template<typename T>
+    void SE3ToScrew(Eigen::Matrix<T, 4, 4> SE, Eigen::Matrix<T, -1, 1>& Screw, T& theta);
 
     template<typename T>
     Eigen::Matrix<T, 3, 3> skew(Eigen::Matrix<T, 3, 1> vec);
@@ -40,6 +46,15 @@ namespace mathfunction
 
     template<typename T>
     Eigen::Matrix<T, 3, 3> transpose(Eigen::Matrix<T, 3, 3> mat);
+
+    template<typename T>
+    Eigen::Matrix<T, -1, -1> adjoint(Eigen::Matrix<T, -1, 1> PosOri);
+
+    template<typename T>
+    Eigen::Matrix<T, -1, -1> adjoint(Eigen::Matrix<T, 4, 4> Pose);
+
+    template<typename T>
+    Eigen::Matrix<T, -1, 1> LieBracket(Eigen::Matrix<T, -1, 1> v1, Eigen::Matrix<T, -1, 1> v2);
 };
 
 template<typename T>
@@ -132,7 +147,7 @@ Eigen::Matrix<T, 4, 4> mathfunction::se3ToSE3(Eigen::Matrix<T, -1, 1> se)
 }
 
 template<typename T>
-Eigen::Matrix<T, -1, 1> mathfunction::SE3TOse3(Eigen::Matrix<T, 4, 4> SE)
+Eigen::Matrix<T, -1, 1> mathfunction::SE3Tose3(Eigen::Matrix<T, 4, 4> SE)
 {
     Eigen::Matrix<T, -1, 1> ans = Eigen::Matrix<T, -1, 1>::Zero(6);
     Eigen::Matrix<T, 3, 3> mat = SE.block(0,0,3,3);
@@ -146,6 +161,28 @@ Eigen::Matrix<T, -1, 1> mathfunction::SE3TOse3(Eigen::Matrix<T, 4, 4> SE)
 
     ans.block(3, 0, 3, 1) = G.inverse() * SE.block(0, 3, 3, 1);
     return ans;
+}
+
+template<typename T>
+void mathfunction::se3ToScrew(Eigen::Matrix<T, -1, 1> se, Eigen::Matrix<T, -1, 1>& Screw, T& theta)
+{
+    theta = se.block(0, 0, 3, 1).norm();
+    if(theta < 0.0001)
+    {
+        theta = se.block(3, 0, 3, 1).norm();
+        Screw = se / theta;
+    }
+    else
+    {
+        Screw = se / theta;
+    }
+}
+
+template<typename T>
+void mathfunction::SE3ToScrew(Eigen::Matrix<T, 4, 4> SE, Eigen::Matrix<T, -1, 1>& Screw, T& theta)
+{
+    Eigen::Matrix<T, -1, 1> se = SE3Tose3(SE);
+    se3ToScrew(se, Screw, theta);
 }
 
 template<typename T>
@@ -175,6 +212,39 @@ Eigen::Matrix<T, 3, 3> mathfunction::transpose(Eigen::Matrix<T, 3, 3> mat)
            mat(0, 1), mat(1, 1), mat(2, 1),
            mat(0, 2), mat(1, 2), mat(2, 2);
     return ans;
+}
+
+template<typename T>
+Eigen::Matrix<T, -1, -1> mathfunction::adjoint(Eigen::Matrix<T, -1, 1> PosOri)
+{
+    Eigen::Matrix<T, 4, 4> Pose = PosOriToPose(PosOri);
+
+    return adjoint(Pose);
+}
+
+template<typename T>
+Eigen::Matrix<T, -1, -1> mathfunction::adjoint(Eigen::Matrix<T, 4, 4> Pose)
+{
+    Eigen::Matrix<T, -1, -1> adj = Eigen::Matrix<T, -1, -1>::Zero(6, 6);
+    adj.block(0, 0, 3, 3) = Pose.block(0, 0, 3, 3);
+    adj.block(3, 3, 3, 3) = Pose.block(0, 0, 3, 3);
+    Eigen::Matrix<T, 3, 1> Pos = Pose.block(0, 3, 3, 1);
+    adj.block(3, 0, 3, 3) = skew(Pos) *  Pose.block(0, 0, 3, 3);
+
+    return adj;
+}
+
+template<typename T>
+Eigen::Matrix<T, -1, -1> mathfunction::LieBracket(Eigen::Matrix<T, -1, 1> v1)
+{
+    Eigen::Matrix<T, -1, -1> ad = Eigen::Matrix<T, -1, -1>::Zero(6,6);
+    Eigen::Matrix<T, 3, 1> r = v1.block(0, 0, 3, 1);
+    ad.block(0, 0, 3, 3) = skew(r);
+    ad.block(3, 3, 3, 3) = skew(r);
+    Eigen::Matrix<T, 3, 1> v = v1.block(3, 0, 3, 1);
+    ad.block(3, 0, 3, 3) = skew(v);
+
+    return ad;
 }
 
 #endif // __UTILS_HPP_

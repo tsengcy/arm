@@ -1,8 +1,4 @@
-#include <iostream>
-#include <robotics/robotarm.hpp>
-#include <memory>
-#include <robotics/utils.hpp>
-
+#include <robotics/dynrobotarm.hpp>
 
 int main()
 {

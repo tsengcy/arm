@@ -37,7 +37,7 @@ Frame<T>::Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype
     {
         mbase = Eigen::Matrix<T, 4, 4>::Identity();
     }
-    mangle = 0;
+    mq = 0;
 }
 
 template<typename T>
@@ -51,10 +51,10 @@ Frame<T>::~Frame()
 }
 
 template<typename T>
-void Frame<T>::set_Angle(T _angle)
+void Frame<T>::set_q(T _angle)
 {
     if(mframetype == FRAMETYPE::ACTIVE)
-        mangle = _angle;
+        mq = _angle;
     else
     {
         std::stringstream ss;
@@ -64,7 +64,33 @@ void Frame<T>::set_Angle(T _angle)
 }
 
 template<typename T>
-void Frame<T>::set_Angle()
+void Frame<T>::set_qd(T _qd)
+{
+    if(mframetype == FRAMETYPE::ACTIVE)
+        mqd = _qd;
+    else
+    {
+        std::stringstream ss;
+        ss << "ERROR: frame " << mnid << " call a wrong set angle method\n";
+        throw std::invalid_argument(ss.str());
+    }
+}
+
+template<typename T>
+void Frame<T>::set_qdd(T _qdd)
+{
+    if(mframetype == FRAMETYPE::ACTIVE)
+        mqdd = _qdd;
+    else
+    {
+        std::stringstream ss;
+        ss << "ERROR: frame " << mnid << " call a wrong set angle method\n";
+        throw std::invalid_argument(ss.str());
+    }
+}
+
+template<typename T>
+void Frame<T>::set_q()
 {
     if(mframetype == FRAMETYPE::PASSIVE)
     {
@@ -75,7 +101,9 @@ void Frame<T>::set_Angle()
             throw std::invalid_argument(ss.str());
         }
         else
-            mangle = mPassiveRate * mpRef.lock()->get_Angle();
+        {
+            mq = mPassiveRate * mpRef.lock()->get_q();
+        }
     }
     else
     {
@@ -86,9 +114,51 @@ void Frame<T>::set_Angle()
 }
 
 template<typename T>
-T Frame<T>::get_Angle()
+void Frame<T>::set_qd()
 {
-    return mangle;
+    if(mframetype == FRAMETYPE::PASSIVE)
+    {
+        if(mpRef.lock() == nullptr)
+        {
+            std::stringstream ss;
+            ss << "ERROR: frame " << mnid << " do not set reference frame\n";
+            throw std::invalid_argument(ss.str());
+        }
+        else
+        {
+            mqd = mPassiveRate * mpRef.lock()->get_qd();
+        }
+    }
+    else
+    {
+        std::stringstream ss;
+        ss << "ERROR: frame " << mnid << " call a wrong set angle method\n";
+        throw std::invalid_argument(ss.str());
+    }
+}
+
+template<typename T>
+void Frame<T>::set_qdd()
+{
+    if(mframetype == FRAMETYPE::PASSIVE)
+    {
+        if(mpRef.lock() == nullptr)
+        {
+            std::stringstream ss;
+            ss << "ERROR: frame " << mnid << " do not set reference frame\n";
+            throw std::invalid_argument(ss.str());
+        }
+        else
+        {
+            mqdd = mPassiveRate * mpRef.lock()->get_qdd();
+        }
+    }
+    else
+    {
+        std::stringstream ss;
+        ss << "ERROR: frame " << mnid << " call a wrong set angle method\n";
+        throw std::invalid_argument(ss.str());
+    }
 }
 
 template<typename T>
@@ -101,17 +171,17 @@ void Frame<T>::update()
 
     if(mDHtype == DH::MODIFIED)
     {
-        mlocal <<             cos(mtheta+mangle),            -sin(mtheta+mangle),            0,              ma,
-                  sin(mtheta+mangle)*cos(malpha), cos(mtheta+mangle)*cos(malpha), -sin(malpha), -md*sin(malpha),
-                  sin(mtheta+mangle)*sin(malpha), cos(mtheta+mangle)*sin(malpha),  cos(malpha),  md*cos(malpha),
-                                               0,                              0,            0,               1;
+        mlocal <<             cos(mtheta+mq),            -sin(mtheta+mq),            0,              ma,
+                  sin(mtheta+mq)*cos(malpha), cos(mtheta+mq)*cos(malpha), -sin(malpha), -md*sin(malpha),
+                  sin(mtheta+mq)*sin(malpha), cos(mtheta+mq)*sin(malpha),  cos(malpha),  md*cos(malpha),
+                                           0,                          0,            0,               1;
     }
     else
     {
-        mlocal << cos(mtheta+mangle), -sin(mtheta+mangle)*cos(malpha),  sin(mtheta+mangle)*sin(malpha),  ma*cos(mtheta+mangle),
-                  sin(mtheta+mangle),  cos(mtheta+mangle)*cos(malpha), -cos(mtheta+mangle)*sin(malpha), -ma*sin(mtheta+mangle),
-                                   0,                     sin(malpha),                     cos(malpha),         md*cos(malpha),
-                                   0,                               0,                               0,                      1;
+        mlocal << cos(mtheta+mq), -sin(mtheta+mq)*cos(malpha),  sin(mtheta+mq)*sin(malpha),  ma*cos(mtheta+mq),
+                  sin(mtheta+mq),  cos(mtheta+mq)*cos(malpha), -cos(mtheta+mq)*sin(malpha), -ma*sin(mtheta+mq),
+                               0,                 sin(malpha),                 cos(malpha),     md*cos(malpha),
+                               0,                           0,                           0,                  1;
     }
     
     mglobal = mbase * mlocal;
@@ -119,6 +189,40 @@ void Frame<T>::update()
     {
         child->update();
     }
+}
+
+template<typename T>
+void Frame<T>::update2()
+{
+    if(!isRoot())
+    {
+        mbase = mpParent.lock()->get_GlobalPose();
+    }
+
+    if(mDHtype == DH::MODIFIED)
+    {
+        mlocal <<             cos(mtheta+mq),            -sin(mtheta+mq),            0,              ma,
+                  sin(mtheta+mq)*cos(malpha), cos(mtheta+mq)*cos(malpha), -sin(malpha), -md*sin(malpha),
+                  sin(mtheta+mq)*sin(malpha), cos(mtheta+mq)*sin(malpha),  cos(malpha),  md*cos(malpha),
+                                           0,                          0,            0,               1;
+    }
+    else
+    {
+        mlocal << cos(mtheta+mq), -sin(mtheta+mq)*cos(malpha),  sin(mtheta+mq)*sin(malpha),  ma*cos(mtheta+mq),
+                  sin(mtheta+mq),  cos(mtheta+mq)*cos(malpha), -cos(mtheta+mq)*sin(malpha), -ma*sin(mtheta+mq),
+                               0,                 sin(malpha),                 cos(malpha),     md*cos(malpha),
+                               0,                           0,                           0,                  1;
+    }
+    
+    mglobal = mbase * mlocal;
+
+    Eigen::Matrix<T, -1, 1> screw;
+    T degree;
+    mathfunction::SE3ToScrew(mglobal, screw, degree);
+    mTwists = mathfunction::adjoint(mlocal) * mpParent.lock()->get_Twists() + screw * mqd;
+    mTwistsd = mathfunction::adjoint(mlocal) * mpParent.lock()->get_Twistsd() + mathfunction::LieBracket(mTwists) * screw * mqd + screw * mqdd;
+
+    
 }
 
 template<typename T>
@@ -210,4 +314,3 @@ void Frame<T>::set_Child(std::shared_ptr<Frame<T>> child)
 {
     mvpChildren.push_back(child);
 }
-

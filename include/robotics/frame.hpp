@@ -37,16 +37,24 @@ public:
     
     ~Frame();
     
-    /** set angle*/
-    void set_Angle(T _angle);
-
     /** set angle for passive frame */
-    void set_Angle();
+    void set_q();
+    void set_qd();
+    void set_qdd();
 
-    T get_Angle();
+    /** set angle*/
+    void set_q(T _angle);
+    void set_qd(T _qd);
+    void set_qdd(T _qdd);
+
+    T get_q(){return mq;}
+    T get_qd(){return mqd;}
+    T get_qdd(){return mqdd;}
 
     /** update frame */
     void update();
+
+    void update2();
 
     void set_PassiveRefFrame(T _rate, std::shared_ptr<Frame<T>> _refFrame);
 
@@ -82,8 +90,13 @@ public:
     T get_alpha(){return malpha;}
     T get_theta(){return mtheta;}
 
+    Eigen::Matrix<T, -1, 1> get_Twists(){return mTwists;}
 
-private:
+    Eigen::Matrix<T, -1, 1> get_Twistsd(){return mTwistsd;}
+
+
+
+protected:
     Eigen::Matrix<T, 4, 4> mlocal;
     Eigen::Matrix<T, 4, 4> mglobal;
     Eigen::Matrix<T, 4, 4> mbase;
@@ -105,7 +118,15 @@ private:
     const T mtheta;
 
     /** @brief current angle */
-    T mangle{0};
+    T mq{0};
+
+    T mqd{0};
+
+    T mqdd{0};
+
+    Eigen::Matrix<T, -1, 1> mTwists;
+
+    Eigen::Matrix<T, -1, 1> mTwistsd;
 
     /** @brief joint limit */
     T mupperLimit;

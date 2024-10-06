@@ -27,8 +27,11 @@ add_library(robotics SHARED
     src/robotics/endeffector.cpp
     include/robotics/frame.hpp
     src/robotics/frame.cpp
+    include/robotics/dynframe.hpp
+    src/robotics/dynframe.cpp
+    include/robotics/dynrobotarm.hpp
+    src/robotics/dynrobotarm.cpp
     include/robotics/utils.hpp
-
 )
 
 
@@ -53,4 +56,15 @@ add_executable(main
 )
 target_link_libraries(main
     robotics
+)
+
+add_executable(test
+    src/test.cpp
+)
+target_link_libraries(test
+    robotics
+)
+
+add_executable(main2
+    src/tmp/main2.cpp
 )

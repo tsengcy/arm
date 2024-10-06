@@ -1,11 +1,22 @@
-#include <Eigen/Core>
-#include <Eigen/Dense>
-#include <iostream>
+// #include <iostream>
+// #include <memory>
+// class A
+// {
+// public:
+//     A(std::shared_ptr<A> ptr)
+//         : mpA(ptr)
+//     {
 
-int main()
-{
-    Eigen::MatrixXf e;
-    // e.rows();
+//     }
 
-    Eigen::VectorXf v;
-}
+//     std::shared_ptr<A> mpA;
+
+// };
+
+// class B : public A
+// {
+//     B(std::shared_ptr<)
+// };
+// int main()
+// {
+// }

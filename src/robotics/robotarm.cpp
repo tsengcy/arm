@@ -5,13 +5,20 @@
 int robotarmId = 0;
 
 template<typename T>
+RobotArm<T>::RobotArm()
+{
+    mnid = robotarmId++;
+}
+
+template<typename T>
 RobotArm<T>::RobotArm(std::vector<T> _va, std::vector<T> _valpha, std::vector<T> _vd, std::vector<T> _vtheta, 
                       std::vector<T> _vupperLimit, std::vector<T> _vlowerLimit, std::vector<int> _vparentId, DH _DHtype, 
                       std::vector<FRAMETYPE> _vFrametype, std::vector<Eigen::Matrix<T, 4, 4>> _vTFrame2EE, std::vector<int> _vEEparent)
 {
     // insert Frame
-    if(_va.size() != _valpha.size() && _va.size() != _vd.size() && _va.size() != _vtheta.size() &&
-       _va.size() != _vupperLimit.size() && _va.size() != _vlowerLimit.size() && _va.size() != _vparentId.size() && _va.size() != _vFrametype.size())
+    if(_va.size() != _valpha.size() || _va.size() != _vd.size() || _va.size() != _vtheta.size() ||
+       _va.size() != _vupperLimit.size() || _va.size() != _vlowerLimit.size() || 
+       _va.size() != _vparentId.size() || _va.size() != _vFrametype.size())
     {
         throw std::invalid_argument("wrong size of frame parameter\n");
     }
@@ -63,63 +70,117 @@ RobotArm<T>::RobotArm(std::vector<T> _va, std::vector<T> _valpha, std::vector<T>
 }
 
 template<typename T>
-void RobotArm<T>::set_Angle(Eigen::Matrix<T, -1, 1> _angle)
+void RobotArm<T>::set_q(Eigen::Matrix<T, -1, 1> _q)
 {
-    set_Angle(mathfunction::EigenVectorToStdVector<T>(_angle));
+    set_q(mathfunction::EigenVectorToStdVector<T>(_q));
 }
 
 template<typename T>
-void RobotArm<T>::set_Angle(std::vector<T> _angle)
+void RobotArm<T>::set_q(std::vector<T> _q)
 {
-    if(_angle.size() != mnDoF)
+    if(_q.size() != mnDoF)
     {
         std::stringstream ss;
-        ss << "wrong size of angle vector, expect " << mnDoF << "; but given " << _angle.size() << std::endl;
+        ss << "wrong size of angle vector, expect " << mnDoF << "; but given " << _q.size() << std::endl;
         throw std::invalid_argument(ss.str());
     }
 
     for(int i=0; i<mvpActiveFrame.size(); i++)
     {
-        mvpActiveFrame[i].lock()->set_Angle(_angle[i]);
+        mvpActiveFrame[i].lock()->set_q(_q[i]);
     }
 
     for(int i=0; i<mvpPassiveFrame.size(); i++)
     {
-        mvpPassiveFrame[i].lock()->set_Angle();
+        mvpPassiveFrame[i].lock()->set_q();
     }
 
     mpRoot->update();
 }
 
 template<typename T>
-Eigen::Matrix<T, -1, 1> RobotArm<T>::get_ActiveAngle()
+void RobotArm<T>::set_qd(Eigen::Matrix<T, -1, 1> _qd)
+{
+    set_qd(mathfunction::EigenVectorToStdVector<T>(_qd));
+}
+
+template<typename T>
+void RobotArm<T>::set_qd(std::vector<T> _qd)
+{
+    if(_qd.size() != mnDoF)
+    {
+        std::stringstream ss;
+        ss << "wrong size of angle vector, expect " << mnDoF << "; but given " << _qd.size() << std::endl;
+        throw std::invalid_argument(ss.str());
+    }
+
+    for(int i=0; i<mvpActiveFrame.size(); i++)
+    {
+        mvpActiveFrame[i].lock()->set_qd(_qd[i]);
+    }
+
+    for(int i=0; i<mvpPassiveFrame.size(); i++)
+    {
+        mvpPassiveFrame[i].lock()->set_qd();
+    }
+}
+
+template<typename T>
+void RobotArm<T>::set_qdd(Eigen::Matrix<T, -1, 1> _qdd)
+{
+    set_qdd(mathfunction::EigenVectorToStdVector<T>(_qdd));
+}
+
+template<typename T>
+void RobotArm<T>::set_qdd(std::vector<T> _qdd)
+{
+    if(_qdd.size() != mnDoF)
+    {
+        std::stringstream ss;
+        ss << "wrong size of angle vector, expect " << mnDoF << "; but given " << _qdd.size() << std::endl;
+        throw std::invalid_argument(ss.str());
+    }
+
+    for(int i=0; i<mvpActiveFrame.size(); i++)
+    {
+        mvpActiveFrame[i].lock()->set_qdd(_qdd[i]);
+    }
+
+    for(int i=0; i<mvpPassiveFrame.size(); i++)
+    {
+        mvpPassiveFrame[i].lock()->set_qdd();
+    }
+}
+
+template<typename T>
+Eigen::Matrix<T, -1, 1> RobotArm<T>::get_Activeq()
 {
     Eigen::Matrix<T, -1, 1> angle(mnDoF);
     for(int i=0; i<mnDoF; i++)
     {
-        angle(i) = mvpActiveFrame[i].lock()->get_Angle();
+        angle(i) = mvpActiveFrame[i].lock()->get_q();
     }
     return angle;
 }
 
 template<typename T>
-Eigen::Matrix<T, -1, 1> RobotArm<T>::get_PassiveAngle()
+Eigen::Matrix<T, -1, 1> RobotArm<T>::get_Passiveq()
 {
     Eigen::Matrix<T, -1, 1> angle(mnPassiveDoF);
     for(int i=0; i<mnPassiveDoF; i++)
     {
-        angle(i) = mvpPassiveFrame[i].lock()->get_Angle();
+        angle(i) = mvpPassiveFrame[i].lock()->get_q();
     }
     return angle;
 }
 
 template<typename T>
-Eigen::Matrix<T, -1, 1> RobotArm<T>::get_Angle()
+Eigen::Matrix<T, -1, 1> RobotArm<T>::get_q()
 {
     Eigen::Matrix<T, -1, 1> angle(mvpFrame.size());
     for(int i=0; i<mvpFrame.size(); i++)
     {
-        angle(i) = mvpFrame[i].lock()->get_Angle();
+        angle(i) = mvpFrame[i].lock()->get_q();
     }
     return angle;
 }
@@ -158,12 +219,13 @@ Eigen::Matrix<T, -1, 1> RobotArm<T>::get_EEPos()
 }
 
 template<typename T>
-void RobotArm<T>::insert_Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype, T _upperLimit, T _lowerLimit, int _parentId)
+int RobotArm<T>::insert_Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype, T _upperLimit, T _lowerLimit, int _parentId)
 {
+    int id;
     if(_parentId == -1) 
     {
         std::shared_ptr<Frame<T>> nf(new Frame<T>(_a, _alpha, _d, _theta, _DHtype, _frametype, _upperLimit, _lowerLimit, nullptr));
-        int id = nf->get_Id();
+        id = nf->get_Id();
         mvpFrame[id] = nf;
         mpRoot = nf;
 #ifdef DEBUG
@@ -173,7 +235,7 @@ void RobotArm<T>::insert_Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAME
     else if(_parentId < mvpFrame.size())
     {
         std::shared_ptr<Frame<T>> nf(new Frame<T>(_a, _alpha, _d, _theta, _DHtype, _frametype, _upperLimit, _lowerLimit, mvpFrame[_parentId].lock()));
-        int id = nf->get_Id();
+        id = nf->get_Id();
         mvpFrame[id] = nf;
         mvpFrame[_parentId].lock()->set_Child(nf);
 #ifdef DEBUG
@@ -189,6 +251,8 @@ void RobotArm<T>::insert_Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAME
         mnDoF++;
     else if(_frametype == FRAMETYPE::PASSIVE)
         mnPassiveDoF++;
+
+    return id;
 }
 
 template<typename T>

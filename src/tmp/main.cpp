@@ -59,6 +59,44 @@ typename std::enable_if_t<std::is_same<T, int>::value> cals(T i, Ts... is)
     std::cout << i << "\t";
     cals(is...);
 }
+#include <iostream>
+
+class par
+{
+public:
+    par() = default;
+    par(int i)
+    {
+        std::cout << "constructor" << std::endl; 
+    }
+
+    virtual void func()
+    {
+        std::cout << "func from par" << std::endl;
+    }
+protected: 
+    int data{0};
+};
+
+class child : public par
+{
+public:
+    child(int i)
+    {
+        std::cout << "child" << std::endl;
+    }
+
+    void func() override
+    {
+        std::cout << "func from child" << std::endl;
+        std::cout << data << std::endl;
+    }
+
+    void func1()
+    {
+        std::cout << data << std::endl;
+    }
+};
 
 #include <vector>
 
@@ -79,7 +117,11 @@ int main()
 
     std::vector<int> a{1, 0, 1};
 
-    std::cout << a.size() << std::endl;    
+    std::cout << a.size() << std::endl;
+
+    par* mc = new child(0);
+
+    mc->func();
 
     return 0;
 }
