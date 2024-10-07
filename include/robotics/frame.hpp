@@ -27,15 +27,14 @@ extern int FrameId;
 extern int ActiveFrameId;
 extern int PassiveFrameId;
 
-template<typename T>
-class Frame : public std::enable_shared_from_this<Frame<T>>
+class Frame : public std::enable_shared_from_this<Frame>
 {
 public:
     /** constructor of frame by using modified dh parameter */
-    Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype,
-          T _upperLimit, T _lowerLimit, std::shared_ptr<Frame<T>> _parent);
+    Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype,
+          float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent);
     
-    ~Frame();
+    virtual ~Frame();
     
     /** set angle for passive frame */
     void set_q();
@@ -43,40 +42,40 @@ public:
     void set_qdd();
 
     /** set angle*/
-    void set_q(T _angle);
-    void set_qd(T _qd);
-    void set_qdd(T _qdd);
+    void set_q(float _angle);
+    void set_qd(float _qd);
+    void set_qdd(float _qdd);
 
-    T get_q(){return mq;}
-    T get_qd(){return mqd;}
-    T get_qdd(){return mqdd;}
+    float get_q(){return mq;}
+    float get_qd(){return mqd;}
+    float get_qdd(){return mqdd;}
 
     /** update frame */
     void update();
 
     void update2();
 
-    void set_PassiveRefFrame(T _rate, std::shared_ptr<Frame<T>> _refFrame);
+    void set_PassiveRefFrame(float _rate, std::shared_ptr<Frame> _refFrame);
 
     /** @brief get local Pose */
-    Eigen::Matrix<T, 4, 4> get_LocalPose();
+    Eigen::Matrix4f get_LocalPose();
 
-    Eigen::Matrix<T, -1, 1> get_LocalPosOri();
+    Eigen::VectorXf get_LocalPosOri();
 
-    Eigen::Matrix<T, 3, 1> get_LocalPos();
+    Eigen::Vector3f get_LocalPos();
 
     /** @brief get global Pose */
-    Eigen::Matrix<T, 4, 4> get_GlobalPose();
+    Eigen::Matrix4f get_GlobalPose();
 
-    Eigen::Matrix<T, -1, 1> get_GlobalPosOri();
+    Eigen::VectorXf get_GlobalPosOri();
 
-    Eigen::Matrix<T, 3, 1> get_GlobalPos();
+    Eigen::Vector3f get_GlobalPos();
 
     void property();
 
     bool isRoot();
 
-    void set_Child(std::shared_ptr<Frame<T>> child);
+    void set_Child(std::shared_ptr<Frame> child);
 
     int get_Id(){return mnid;}
 
@@ -85,21 +84,21 @@ public:
     FRAMETYPE get_FrameType(){return mframetype;}
 
     /** getter for DH parameter*/
-    T get_a(){return ma;}
-    T get_d(){return md;}
-    T get_alpha(){return malpha;}
-    T get_theta(){return mtheta;}
+    float get_a(){return ma;}
+    float get_d(){return md;}
+    float get_alpha(){return malpha;}
+    float get_theta(){return mtheta;}
 
-    Eigen::Matrix<T, -1, 1> get_Twists(){return mTwists;}
+    Eigen::VectorXf get_Twists(){return mTwists;}
 
-    Eigen::Matrix<T, -1, 1> get_Twistsd(){return mTwistsd;}
+    Eigen::VectorXf get_Twistsd(){return mTwistsd;}
 
 
 
 protected:
-    Eigen::Matrix<T, 4, 4> mlocal;
-    Eigen::Matrix<T, 4, 4> mglobal;
-    Eigen::Matrix<T, 4, 4> mbase;
+    Eigen::Matrix4f mlocal;
+    Eigen::Matrix4f mglobal;
+    Eigen::Matrix4f mbase;
 
     /** @brief DH type */
     DH mDHtype;
@@ -108,45 +107,39 @@ protected:
     FRAMETYPE mframetype;
 
     /** @brief reference frame */
-    std::weak_ptr<Frame<T>> mpRef;
+    std::weak_ptr<Frame> mpRef;
     float mPassiveRate;
     
     /** @brief DH parameter */
-    const T ma;
-    const T malpha;
-    const T md;
-    const T mtheta;
+    const float ma;
+    const float malpha;
+    const float md;
+    const float mtheta;
 
     /** @brief current angle */
-    T mq{0};
+    float mq{0};
 
-    T mqd{0};
+    float mqd{0};
 
-    T mqdd{0};
+    float mqdd{0};
 
-    Eigen::Matrix<T, -1, 1> mTwists;
+    Eigen::VectorXf mTwists;
 
-    Eigen::Matrix<T, -1, 1> mTwistsd;
+    Eigen::VectorXf mTwistsd;
 
     /** @brief joint limit */
-    T mupperLimit;
-    T mlowerLimit;
+    float mupperLimit;
+    float mlowerLimit;
 
     /** @brief id of frame */
     int mnid;
     int mnJointId;
 
     /** @brief pointer to children*/
-    std::vector<std::shared_ptr<Frame<T>>> mvpChildren;
+    std::vector<std::shared_ptr<Frame>> mvpChildren;
 
     /** @brief pointer to parent */
-    std::weak_ptr<Frame<T>> mpParent;
+    std::weak_ptr<Frame> mpParent;
 };
-
-template class Frame<float>;
-template class Frame<double>;
-
-typedef Frame<float> Framef;
-typedef Frame<double> Framed;
 
 #endif // __FRAME_HPP_

@@ -8,17 +8,16 @@
 
 extern int EEId;
 
-template<typename T>
 class EndEffector
 {
 public:
-    EndEffector(std::shared_ptr<Frame<T>> frame, Eigen::Matrix<T, 4, 4> trans);
+    EndEffector(std::shared_ptr<Frame> frame, Eigen::Matrix4f trans);
 
-    Eigen::Matrix<T, 4, 4> get_GlobalPose();
+    Eigen::Matrix4f get_GlobalPose();
 
-    Eigen::Matrix<T, -1, 1> get_GlobalPosOri();
+    Eigen::VectorXf get_GlobalPosOri();
 
-    Eigen::Matrix<T, 3, 1> get_GlobalPos();
+    Eigen::Vector3f get_GlobalPos();
 
     int get_Id(){return mnid;}
 
@@ -26,22 +25,13 @@ private:
     void update();
 
 private:
-    std::weak_ptr<Frame<T>> mpFrame;
+    std::weak_ptr<Frame> mpFrame;
     
-    Eigen::Matrix<T, 4, 4> mTFrame2EE;
+    Eigen::Matrix4f mTFrame2EE;
 
-    Eigen::Matrix<T, 4, 4> mTGlobal;
+    Eigen::Matrix4f mTGlobal;
 
     int mnid;
 };
-
-template class EndEffector<float>;
-template class EndEffector<double>;
-
-using EndEffectorf = EndEffector<float>;
-using EndEffectord = EndEffector<double>;
-
-
-
 
 #endif // __ENDEFFECTOR_HPP_

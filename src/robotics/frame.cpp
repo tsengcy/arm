@@ -4,9 +4,8 @@ int FrameId = 0;
 int ActiveFrameId = 0;
 int PassiveFrameId = 0;
 
-template<typename T>
-Frame<T>::Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype, 
-                T _upperLimit, T _lowerLimit, std::shared_ptr<Frame<T>> _parent) 
+Frame::Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype, 
+                float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent) 
                 : ma(_a), malpha(_alpha), md(_d), mtheta(_theta), mDHtype(_DHtype),
                   mframetype(_frametype), mupperLimit(_upperLimit), mlowerLimit(_lowerLimit)
 {
@@ -35,13 +34,12 @@ Frame<T>::Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype
     }
     else
     {
-        mbase = Eigen::Matrix<T, 4, 4>::Identity();
+        mbase = Eigen::Matrix4f::Identity();
     }
     mq = 0;
 }
 
-template<typename T>
-Frame<T>::~Frame()
+Frame::~Frame()
 {
     std::cout << "reset id: " << mnid << std::endl;
     for(auto &ptr : mvpChildren)
@@ -50,8 +48,7 @@ Frame<T>::~Frame()
     }
 }
 
-template<typename T>
-void Frame<T>::set_q(T _angle)
+void Frame::set_q(float _angle)
 {
     if(mframetype == FRAMETYPE::ACTIVE)
         mq = _angle;
@@ -63,8 +60,7 @@ void Frame<T>::set_q(T _angle)
     }
 }
 
-template<typename T>
-void Frame<T>::set_qd(T _qd)
+void Frame::set_qd(float _qd)
 {
     if(mframetype == FRAMETYPE::ACTIVE)
         mqd = _qd;
@@ -76,8 +72,7 @@ void Frame<T>::set_qd(T _qd)
     }
 }
 
-template<typename T>
-void Frame<T>::set_qdd(T _qdd)
+void Frame::set_qdd(float _qdd)
 {
     if(mframetype == FRAMETYPE::ACTIVE)
         mqdd = _qdd;
@@ -89,8 +84,7 @@ void Frame<T>::set_qdd(T _qdd)
     }
 }
 
-template<typename T>
-void Frame<T>::set_q()
+void Frame::set_q()
 {
     if(mframetype == FRAMETYPE::PASSIVE)
     {
@@ -113,8 +107,7 @@ void Frame<T>::set_q()
     }
 }
 
-template<typename T>
-void Frame<T>::set_qd()
+void Frame::set_qd()
 {
     if(mframetype == FRAMETYPE::PASSIVE)
     {
@@ -137,8 +130,7 @@ void Frame<T>::set_qd()
     }
 }
 
-template<typename T>
-void Frame<T>::set_qdd()
+void Frame::set_qdd()
 {
     if(mframetype == FRAMETYPE::PASSIVE)
     {
@@ -161,8 +153,7 @@ void Frame<T>::set_qdd()
     }
 }
 
-template<typename T>
-void Frame<T>::update()
+void Frame::update()
 {
     if(!isRoot())
     {
@@ -191,8 +182,7 @@ void Frame<T>::update()
     }
 }
 
-template<typename T>
-void Frame<T>::update2()
+void Frame::update2()
 {
     if(!isRoot())
     {
@@ -216,8 +206,8 @@ void Frame<T>::update2()
     
     mglobal = mbase * mlocal;
 
-    Eigen::Matrix<T, -1, 1> screw;
-    T degree;
+    Eigen::VectorXf screw;
+    float degree;
     mathfunction::SE3ToScrew(mglobal, screw, degree);
     mTwists = mathfunction::adjoint(mlocal) * mpParent.lock()->get_Twists() + screw * mqd;
     mTwistsd = mathfunction::adjoint(mlocal) * mpParent.lock()->get_Twistsd() + mathfunction::LieBracket(mTwists) * screw * mqd + screw * mqdd;
@@ -225,8 +215,7 @@ void Frame<T>::update2()
     
 }
 
-template<typename T>
-void Frame<T>::set_PassiveRefFrame(T _rate, std::shared_ptr<Frame<T>> _refFrame)
+void Frame::set_PassiveRefFrame(float _rate, std::shared_ptr<Frame> _refFrame)
 {
     if(mframetype != FRAMETYPE::PASSIVE)
     {
@@ -244,44 +233,37 @@ void Frame<T>::set_PassiveRefFrame(T _rate, std::shared_ptr<Frame<T>> _refFrame)
     }
 }
 
-template<typename T>
-Eigen::Matrix<T, 4, 4> Frame<T>::get_LocalPose()
+Eigen::Matrix4f Frame::get_LocalPose()
 {
     return mlocal;
 }
 
-template<typename T>
-Eigen::Matrix<T, -1, 1> Frame<T>::get_LocalPosOri()
+Eigen::VectorXf Frame::get_LocalPosOri()
 {
     return mathfunction::PoseToPosOri(mlocal);
 }
 
-template<typename T>
-Eigen::Matrix<T, 3, 1> Frame<T>::get_LocalPos()
+Eigen::Vector3f Frame::get_LocalPos()
 {
     return mathfunction::PoseToPos(mlocal);
 }
 
-template<typename T>
-Eigen::Matrix<T, 4, 4> Frame<T>::get_GlobalPose()
+Eigen::Matrix4f Frame::get_GlobalPose()
 {
     return mglobal;
 }
 
-template<typename T>
-Eigen::Matrix<T, -1, 1> Frame<T>::get_GlobalPosOri()
+Eigen::VectorXf Frame::get_GlobalPosOri()
 {
     return mathfunction::PoseToPosOri(mglobal);
 }
 
-template<typename T>
-Eigen::Matrix<T, 3, 1> Frame<T>::get_GlobalPos()
+Eigen::Vector3f Frame::get_GlobalPos()
 {
     return mathfunction::PoseToPos(mglobal);
 }
 
-template<typename T>
-void Frame<T>::property()
+void Frame::property()
 {
 #ifdef DEBUG
     std::cout << "+----------------------------------+\n"
@@ -303,14 +285,12 @@ void Frame<T>::property()
 #endif
 }
 
-template<typename T>
-bool Frame<T>::isRoot()
+bool Frame::isRoot()
 {
     return mpParent.lock() == nullptr;
 }
 
-template<typename T>
-void Frame<T>::set_Child(std::shared_ptr<Frame<T>> child)
+void Frame::set_Child(std::shared_ptr<Frame> child)
 {
     mvpChildren.push_back(child);
 }

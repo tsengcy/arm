@@ -1,12 +1,11 @@
 #include <robotics/dynrobotarm.hpp>
 #include <stdexcept>
 
-template<typename T>
-dynRobotArm<T>::dynRobotArm(std::vector<T> _va, std::vector<T> _valpha, std::vector<T> _vd, std::vector<T> _vtheta, 
-                            std::vector<T> _vupperLimit, std::vector<T> _vlowerLimit, std::vector<int> _vparentId, DH _DHtype,
-                            std::vector<FRAMETYPE> _vFrametype, std::vector<T> _vmass, std::vector<Eigen::Matrix<T, 3, 3>> _vinertira, std::vector<Eigen::Matrix<T, 4, 4>> _vTCOM,
-                            std::vector<Eigen::Matrix<T, 4, 4>> _vTFrame2EE, std::vector<int> _vEEparent)
-                            :RobotArm<T>()
+dynRobotArm::dynRobotArm(std::vector<float> _va, std::vector<float> _valpha, std::vector<float> _vd, std::vector<float> _vtheta, 
+                         std::vector<float> _vupperLimit, std::vector<float> _vlowerLimit, std::vector<int> _vparentId, DH _DHtype,
+                         std::vector<FRAMETYPE> _vFrametype, std::vector<float> _vmass, std::vector<Eigen::Matrix3f> _vinertira, std::vector<Eigen::Matrix4f> _vTCOM,
+                         std::vector<Eigen::Matrix4f> _vTFrame2EE, std::vector<int> _vEEparent)
+                         :RobotArm()
 {
     if(_va.size() != _valpha.size() || _va.size() != _vd.size() || _va.size() != _vtheta.size() ||
        _va.size() != _vupperLimit.size() || _va.size() != _vlowerLimit.size() || 
@@ -16,8 +15,7 @@ dynRobotArm<T>::dynRobotArm(std::vector<T> _va, std::vector<T> _valpha, std::vec
         throw std::invalid_argument("wrong size of frame parameter\n");
     }
 
-    RobotArm<T>::mvpFrame.resize(_va.size());
-    mvpDynFrame.resize(_va.size());
+    RobotArm::mvpFrame.resize(_va.size());
 
     for(int i=0; i<_va.size(); i++)
     {
@@ -25,22 +23,22 @@ dynRobotArm<T>::dynRobotArm(std::vector<T> _va, std::vector<T> _valpha, std::vec
                         _vmass[i], _vinertira[i], _vTCOM[i]);
     }
 
-    RobotArm<T>::mvpActiveFrame.resize(RobotArm<T>::mnDoF);
-    RobotArm<T>::mvpPassiveFrame.resize(RobotArm<T>::mnPassiveDoF);
-    for(int i=0; i<RobotArm<T>::mvpFrame.size(); i++)
+    RobotArm::mvpActiveFrame.resize(RobotArm::mnDoF);
+    RobotArm::mvpPassiveFrame.resize(RobotArm::mnPassiveDoF);
+    for(int i=0; i<RobotArm::mvpFrame.size(); i++)
     {
-        int id = RobotArm<T>::mvpFrame[i].lock()->get_JointId();
-        if(RobotArm<T>::mvpFrame[i].lock()->get_FrameType() == FRAMETYPE::ACTIVE)
+        int id = RobotArm::mvpFrame[i].lock()->get_JointId();
+        if(RobotArm::mvpFrame[i].lock()->get_FrameType() == FRAMETYPE::ACTIVE)
         {
-            RobotArm<T>::mvpActiveFrame[id] = RobotArm<T>::mvpFrame[i];
+            RobotArm::mvpActiveFrame[id] = RobotArm::mvpFrame[i];
         }
-        else if(RobotArm<T>::mvpFrame[i].lock()->get_FrameType() == FRAMETYPE::PASSIVE)
+        else if(RobotArm::mvpFrame[i].lock()->get_FrameType() == FRAMETYPE::PASSIVE)
         {
-            RobotArm<T>::mvpPassiveFrame[id] = RobotArm<T>::mvpFrame[i];
+            RobotArm::mvpPassiveFrame[id] = RobotArm::mvpFrame[i];
         }
     }
 
-    RobotArm<T>::mpRoot->update();
+    RobotArm::mpRoot->update();
 
     // insert end effector 
     if(_vTFrame2EE.size() != _vEEparent.size())
@@ -48,36 +46,36 @@ dynRobotArm<T>::dynRobotArm(std::vector<T> _va, std::vector<T> _valpha, std::vec
         throw std::invalid_argument("wrong size of EE parameter");
     }
 
-    RobotArm<T>::mvpEE.resize(_vTFrame2EE.size());
+    RobotArm::mvpEE.resize(_vTFrame2EE.size());
 
     for(int i=0; i<_vTFrame2EE.size(); i++)
     {
         insert_endeffector(_vTFrame2EE[i], _vEEparent[i]);
-        RobotArm<T>::mnEE++;
+        RobotArm::mnEE++;
     }
 }
 
-template<typename T>
-void dynRobotArm<T>::insert_DynFrame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype, T _upperLimit, T _lowerLimit, int _parentId,
-                         T _mass, Eigen::Matrix<T, 3, 3> _inertira, Eigen::Matrix<T, 4, 4> _TCOM)
+void dynRobotArm::insert_DynFrame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype,
+                                  float _upperLimit, float _lowerLimit, int _parentId,
+                                  float _mass, Eigen::Matrix3f _inertira, Eigen::Matrix4f _TCOM)
 {
     int id;
     if(_parentId == -1) 
     {
-        std::shared_ptr<dynFrame<T>> nf(new dynFrame<T>(_a, _alpha, _d, _theta, _DHtype, _frametype, _upperLimit, _lowerLimit, nullptr, _mass, _inertira, _TCOM));
+        std::shared_ptr<dynFrame> nf(new dynFrame(_a, _alpha, _d, _theta, _DHtype, _frametype, _upperLimit, _lowerLimit, nullptr, _mass, _inertira, _TCOM));
         id = nf->get_Id();
-        RobotArm<T>::mvpFrame[id] = nf;
-        RobotArm<T>::mpRoot = nf;
+        RobotArm::mvpFrame[id] = nf;
+        RobotArm::mpRoot = nf;
 #ifdef DEBUG
         std::cout << "insert a root\n";
 #endif
     }
     else if(_parentId < mvpFrame.size())
     {
-        std::shared_ptr<dynFrame<T>> nf(new dynFrame<T>(_a, _alpha, _d, _theta, _DHtype, _frametype, _upperLimit, _lowerLimit, mvpFrame[_parentId].lock(), _mass, _inertira, _TCOM));
+        std::shared_ptr<dynFrame> nf(new dynFrame(_a, _alpha, _d, _theta, _DHtype, _frametype, _upperLimit, _lowerLimit, mvpFrame[_parentId].lock(), _mass, _inertira, _TCOM));
         id = nf->get_Id();
-        RobotArm<T>::mvpFrame[id] = nf;
-        RobotArm<T>::mvpFrame[_parentId].lock()->set_Child(nf);
+        RobotArm::mvpFrame[id] = nf;
+        RobotArm::mvpFrame[_parentId].lock()->set_Child(nf);
 #ifdef DEBUG
         std::cout << "insert frame id: " << nf->get_Id() << std::endl;
 #endif
@@ -88,26 +86,25 @@ void dynRobotArm<T>::insert_DynFrame(T _a, T _alpha, T _d, T _theta, DH _DHtype,
     }
 
     if(_frametype == FRAMETYPE::ACTIVE)
-        RobotArm<T>:mnDoF++;
+        RobotArm::mnDoF++;
     else if(_frametype == FRAMETYPE::PASSIVE)
-        RobotArm<T>:mnPassiveDoF++;
+        RobotArm::mnPassiveDoF++;
 }
 
-template<typename T>
-void dynRobotArm<T>::Inverse_Dynamic(Eigen::Matrix<T, -1, 1> _q, Eigen::Matrix<T, -1, 1> _qd, Eigen::Matrix<T, -1, 1> _qdd)
+void dynRobotArm::Inverse_Dynamic(Eigen::VectorXf _q, Eigen::VectorXf _qd, Eigen::VectorXf _qdd)
 {
     // update configure
-    RobotArm<T>::set_q(_q);
-    RobotArm<T>::set_qd(_qd);
-    RobotArm<T>::set_qdd(_qdd);
+    RobotArm::set_q(_q);
+    RobotArm::set_qd(_qd);
+    RobotArm::set_qdd(_qdd);
 
     // forward
-    std::queue<std::weak_ptr<dynFrame<T>>> mqforward;
-    mqforward.push(mDynRoot);
+    std::queue<std::shared_ptr<Frame>> mqforward;
+    mqforward.push(mpRoot);
 
     while(mqforward.empty())
     {
-        std::shared_ptr<dynFrame<T>> pDynFrame = mqforward.pop();
+        std::shared_ptr<Frame> pDynFrame = mqforward.front();
     }
 
     // backward

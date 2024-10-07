@@ -2,35 +2,30 @@
 
 int EEId = 0;
 
-template<typename T>
-EndEffector<T>::EndEffector(std::shared_ptr<Frame<T>> frame, Eigen::Matrix<T, 4, 4> trans)
+EndEffector::EndEffector(std::shared_ptr<Frame> frame, Eigen::Matrix4f trans)
     : mpFrame(frame), mTFrame2EE(trans)
 {
     mnid = EEId++;
 }
 
-template<typename T>
-void EndEffector<T>::update()
+void EndEffector::update()
 {
     mTGlobal = mpFrame.lock()->get_GlobalPose() * mTFrame2EE;
 }
 
-template<typename T>
-Eigen::Matrix<T, 4, 4> EndEffector<T>::get_GlobalPose()
+Eigen::Matrix4f EndEffector::get_GlobalPose()
 {
     update();
     return mTGlobal;
 }
 
-template<typename T>
-Eigen::Matrix<T, -1, 1> EndEffector<T>::get_GlobalPosOri()
+Eigen::VectorXf EndEffector::get_GlobalPosOri()
 {
     update();
     return mathfunction::PoseToPosOri(mTGlobal);
 }
 
-template<typename T>
-Eigen::Matrix<T, 3, 1> EndEffector<T>::get_GlobalPos()
+Eigen::Vector3f EndEffector::get_GlobalPos()
 {
     update();
     return mathfunction::PoseToPos(mTGlobal);

@@ -19,7 +19,7 @@ int main()
     trans(0, 3) = 1;
     std::vector<Eigen::Matrix4f> vtrans{trans};
 
-    RobotArmf* rbt = new RobotArmf(a, alpha, d, theta, upper, lower, parentId, DH::MODIFIED,
+    RobotArm* rbt = new RobotArm(a, alpha, d, theta, upper, lower, parentId, DH::MODIFIED,
                                    frametype, vtrans, eeparent);
 
     rbt->property();

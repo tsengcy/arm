@@ -4,16 +4,14 @@
 
 int robotarmId = 0;
 
-template<typename T>
-RobotArm<T>::RobotArm()
+RobotArm::RobotArm()
 {
     mnid = robotarmId++;
 }
 
-template<typename T>
-RobotArm<T>::RobotArm(std::vector<T> _va, std::vector<T> _valpha, std::vector<T> _vd, std::vector<T> _vtheta, 
-                      std::vector<T> _vupperLimit, std::vector<T> _vlowerLimit, std::vector<int> _vparentId, DH _DHtype, 
-                      std::vector<FRAMETYPE> _vFrametype, std::vector<Eigen::Matrix<T, 4, 4>> _vTFrame2EE, std::vector<int> _vEEparent)
+RobotArm::RobotArm(std::vector<float> _va, std::vector<float> _valpha, std::vector<float> _vd, std::vector<float> _vtheta, 
+                   std::vector<float> _vupperLimit, std::vector<float> _vlowerLimit, std::vector<int> _vparentId, DH _DHtype, 
+                   std::vector<FRAMETYPE> _vFrametype, std::vector<Eigen::Matrix4f> _vTFrame2EE, std::vector<int> _vEEparent)
 {
     // insert Frame
     if(_va.size() != _valpha.size() || _va.size() != _vd.size() || _va.size() != _vtheta.size() ||
@@ -69,14 +67,12 @@ RobotArm<T>::RobotArm(std::vector<T> _va, std::vector<T> _valpha, std::vector<T>
 #endif
 }
 
-template<typename T>
-void RobotArm<T>::set_q(Eigen::Matrix<T, -1, 1> _q)
+void RobotArm::set_q(Eigen::VectorXf _q)
 {
-    set_q(mathfunction::EigenVectorToStdVector<T>(_q));
+    set_q(mathfunction::EigenVectorToStdVector(_q));
 }
 
-template<typename T>
-void RobotArm<T>::set_q(std::vector<T> _q)
+void RobotArm::set_q(std::vector<float> _q)
 {
     if(_q.size() != mnDoF)
     {
@@ -98,14 +94,12 @@ void RobotArm<T>::set_q(std::vector<T> _q)
     mpRoot->update();
 }
 
-template<typename T>
-void RobotArm<T>::set_qd(Eigen::Matrix<T, -1, 1> _qd)
+void RobotArm::set_qd(Eigen::VectorXf _qd)
 {
-    set_qd(mathfunction::EigenVectorToStdVector<T>(_qd));
+    set_qd(mathfunction::EigenVectorToStdVector(_qd));
 }
 
-template<typename T>
-void RobotArm<T>::set_qd(std::vector<T> _qd)
+void RobotArm::set_qd(std::vector<float> _qd)
 {
     if(_qd.size() != mnDoF)
     {
@@ -125,14 +119,12 @@ void RobotArm<T>::set_qd(std::vector<T> _qd)
     }
 }
 
-template<typename T>
-void RobotArm<T>::set_qdd(Eigen::Matrix<T, -1, 1> _qdd)
+void RobotArm::set_qdd(Eigen::VectorXf _qdd)
 {
-    set_qdd(mathfunction::EigenVectorToStdVector<T>(_qdd));
+    set_qdd(mathfunction::EigenVectorToStdVector(_qdd));
 }
 
-template<typename T>
-void RobotArm<T>::set_qdd(std::vector<T> _qdd)
+void RobotArm::set_qdd(std::vector<float> _qdd)
 {
     if(_qdd.size() != mnDoF)
     {
@@ -152,10 +144,9 @@ void RobotArm<T>::set_qdd(std::vector<T> _qdd)
     }
 }
 
-template<typename T>
-Eigen::Matrix<T, -1, 1> RobotArm<T>::get_Activeq()
+Eigen::VectorXf RobotArm::get_Activeq()
 {
-    Eigen::Matrix<T, -1, 1> angle(mnDoF);
+    Eigen::VectorXf angle(mnDoF);
     for(int i=0; i<mnDoF; i++)
     {
         angle(i) = mvpActiveFrame[i].lock()->get_q();
@@ -163,10 +154,9 @@ Eigen::Matrix<T, -1, 1> RobotArm<T>::get_Activeq()
     return angle;
 }
 
-template<typename T>
-Eigen::Matrix<T, -1, 1> RobotArm<T>::get_Passiveq()
+Eigen::VectorXf RobotArm::get_Passiveq()
 {
-    Eigen::Matrix<T, -1, 1> angle(mnPassiveDoF);
+    Eigen::VectorXf angle(mnPassiveDoF);
     for(int i=0; i<mnPassiveDoF; i++)
     {
         angle(i) = mvpPassiveFrame[i].lock()->get_q();
@@ -174,10 +164,9 @@ Eigen::Matrix<T, -1, 1> RobotArm<T>::get_Passiveq()
     return angle;
 }
 
-template<typename T>
-Eigen::Matrix<T, -1, 1> RobotArm<T>::get_q()
+Eigen::VectorXf RobotArm::get_q()
 {
-    Eigen::Matrix<T, -1, 1> angle(mvpFrame.size());
+    Eigen::VectorXf angle(mvpFrame.size());
     for(int i=0; i<mvpFrame.size(); i++)
     {
         angle(i) = mvpFrame[i].lock()->get_q();
@@ -185,10 +174,9 @@ Eigen::Matrix<T, -1, 1> RobotArm<T>::get_q()
     return angle;
 }
 
-template<typename T>
-Eigen::Matrix<T, -1, -1> RobotArm<T>::get_EEPose()
+Eigen::MatrixXf RobotArm::get_EEPose()
 {
-    Eigen::Matrix<T, -1, -1> pose(mnEE * 4, 4);
+    Eigen::MatrixXf pose(mnEE * 4, 4);
     for(int i=0; i<mnEE; i++)
     {
         pose.block(4*i, 0, 4, 4) = mvpEE[i]->get_GlobalPose();
@@ -196,10 +184,9 @@ Eigen::Matrix<T, -1, -1> RobotArm<T>::get_EEPose()
     return pose;
 }
 
-template<typename T>
-Eigen::Matrix<T, -1, 1> RobotArm<T>::get_EEPosOri()
+Eigen::VectorXf RobotArm::get_EEPosOri()
 {
-    Eigen::Matrix<T, -1, 1> PosOri(mnEE * 6);
+    Eigen::VectorXf PosOri(mnEE * 6);
     for(int i=0; i<mnEE; i++)
     {
         PosOri.block(6*i, 0, 6, 1) = mvpEE[i]->get_GlobalPosOri();
@@ -207,10 +194,9 @@ Eigen::Matrix<T, -1, 1> RobotArm<T>::get_EEPosOri()
     return PosOri;
 } 
 
-template<typename T>
-Eigen::Matrix<T, -1, 1> RobotArm<T>::get_EEPos()
+Eigen::VectorXf RobotArm::get_EEPos()
 {
-    Eigen::Matrix<T, -1, 1> Pos(mnEE * 3);
+    Eigen::VectorXf Pos(mnEE * 3);
     for(int i=0; i<mnEE; i++)
     {
         Pos.block(3*i, 0, 3, 1) = mvpEE[i]->get_GlobalPos();
@@ -218,13 +204,12 @@ Eigen::Matrix<T, -1, 1> RobotArm<T>::get_EEPos()
     return Pos;
 }
 
-template<typename T>
-int RobotArm<T>::insert_Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype, T _upperLimit, T _lowerLimit, int _parentId)
+int RobotArm::insert_Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype, float _upperLimit, float _lowerLimit, int _parentId)
 {
     int id;
     if(_parentId == -1) 
     {
-        std::shared_ptr<Frame<T>> nf(new Frame<T>(_a, _alpha, _d, _theta, _DHtype, _frametype, _upperLimit, _lowerLimit, nullptr));
+        std::shared_ptr<Frame> nf(new Frame(_a, _alpha, _d, _theta, _DHtype, _frametype, _upperLimit, _lowerLimit, nullptr));
         id = nf->get_Id();
         mvpFrame[id] = nf;
         mpRoot = nf;
@@ -234,7 +219,7 @@ int RobotArm<T>::insert_Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMET
     }
     else if(_parentId < mvpFrame.size())
     {
-        std::shared_ptr<Frame<T>> nf(new Frame<T>(_a, _alpha, _d, _theta, _DHtype, _frametype, _upperLimit, _lowerLimit, mvpFrame[_parentId].lock()));
+        std::shared_ptr<Frame> nf(new Frame(_a, _alpha, _d, _theta, _DHtype, _frametype, _upperLimit, _lowerLimit, mvpFrame[_parentId].lock()));
         id = nf->get_Id();
         mvpFrame[id] = nf;
         mvpFrame[_parentId].lock()->set_Child(nf);
@@ -255,19 +240,17 @@ int RobotArm<T>::insert_Frame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMET
     return id;
 }
 
-template<typename T>
-void RobotArm<T>::insert_endeffector(Eigen::Matrix<T, 4, 4> _TFrame2EE, int _EEparent)
+void RobotArm::insert_endeffector(Eigen::Matrix4f _TFrame2EE, int _EEparent)
 {
     if(_EEparent < mvpFrame.size())
     {
-        std::shared_ptr<EndEffector<T>> nee(new EndEffector<T>(mvpFrame[_EEparent].lock(), _TFrame2EE));
+        std::shared_ptr<EndEffector> nee(new EndEffector(mvpFrame[_EEparent].lock(), _TFrame2EE));
         int id = nee->get_Id();
         mvpEE[id] = nee;
     } 
 }
 
-template<typename T>
-void RobotArm<T>::property()
+void RobotArm::property()
 {
     std::cout << "+----------------------------+" << std::endl;
     std::cout << "robot arm id: " << mnid << std::endl;

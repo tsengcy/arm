@@ -8,32 +8,24 @@
 #include <memory>
 #include <queue>
 
-template<typename T>
-class dynRobotArm : public RobotArm<T>
+class dynRobotArm : public RobotArm
 {
 public:
-    dynRobotArm(std::vector<T> _va, std::vector<T> _valpha, std::vector<T> _vd, std::vector<T> _vtheta, 
-                std::vector<T> _vupperLimit, std::vector<T> _vlowerLimit, std::vector<int> _vparentId, DH _DHtype,
-                std::vector<FRAMETYPE> _vFrametype, std::vector<T> _vmass, std::vector<Eigen::Matrix<T, 3, 3>> _vinertira, std::vector<Eigen::Matrix<T, 4, 4>> _vTCOM,
-                std::vector<Eigen::Matrix<T, 4, 4>> _vTFrame2EE, std::vector<int> _vEEparent);
+    dynRobotArm(std::vector<float> _va, std::vector<float> _valpha, std::vector<float> _vd, std::vector<float> _vtheta, 
+                std::vector<float> _vupperLimit, std::vector<float> _vlowerLimit, std::vector<int> _vparentId, DH _DHtype,
+                std::vector<FRAMETYPE> _vFrametype, std::vector<float> _vmass, std::vector<Eigen::Matrix3f> _vinertira, std::vector<Eigen::Matrix4f> _vTCOM,
+                std::vector<Eigen::Matrix4f> _vTFrame2EE, std::vector<int> _vEEparent);
 
     void Forward_Dynamic();
 
-    void Inverse_Dynamic(Eigen::Matrix<T, -1, 1> _q, Eigen::Matrix<T, -1, 1> _qd, Eigen::Matrix<T, -1, 1> _qdd);
+    void Inverse_Dynamic(Eigen::VectorXf _q, Eigen::VectorXf _qd, Eigen::VectorXf _qdd);
 
 private:
-    void insert_DynFrame(T _a, T _alpha, T _d, T _theta, DH _DHtype, FRAMETYPE _frametype, T _upperLimit, T _lowerLimit, int _parentId,
-                         T _mass, Eigen::Matrix<T, 3, 3> _inertira, Eigen::Matrix<T, 4, 4> _TCOM);
+    void insert_DynFrame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype, float _upperLimit, float _lowerLimit, int _parentId,
+                         float _mass, Eigen::Matrix3f _inertira, Eigen::Matrix4f _TCOM);
 
 private:
 
 };
-
-template class dynRobotArm<float>;
-template class dynRobotArm<double>;
-
-typedef dynRobotArm<float> dynRobotArmf;
-typedef dynRobotArm<double> dynRobotArmd;
-
 
 #endif

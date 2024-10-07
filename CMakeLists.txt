@@ -32,6 +32,7 @@ add_library(robotics SHARED
     include/robotics/dynrobotarm.hpp
     src/robotics/dynrobotarm.cpp
     include/robotics/utils.hpp
+    src/robotics/utils.cpp
 )
 
 
@@ -65,6 +66,6 @@ target_link_libraries(test
     robotics
 )
 
-add_executable(main2
-    src/tmp/main2.cpp
-)
+# add_executable(main2
+#     src/tmp/main2.cpp
+# )
