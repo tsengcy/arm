@@ -7,6 +7,7 @@ std::vector<float> mathfunction::EigenVectorToStdVector(Eigen::VectorXf vec)
     {
         ans[i] = vec(i);
     }
+    
     return ans;
 }
 
@@ -115,6 +116,7 @@ void mathfunction::se3ToScrew(Eigen::VectorXf se, Eigen::VectorXf& Screw, float&
 void mathfunction::SE3ToScrew(Eigen::Matrix4f SE, Eigen::VectorXf& Screw, float& theta)
 {
     Eigen::VectorXf se = SE3Tose3(SE);
+    std::cout << "se\n" << se << std::endl;
     se3ToScrew(se, Screw, theta);
 }
 

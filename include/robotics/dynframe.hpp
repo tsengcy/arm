@@ -11,17 +11,19 @@ class dynFrame : public Frame
 public:
     dynFrame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype,
              float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent,
-             float _mass, Eigen::Matrix3f _inertia, Eigen::Matrix4f _TCOM);
-
-    int get_Id(){return mnDynId;}
+             float _mass, Eigen::Matrix3f _inertia, Eigen::Matrix4f _TCOM, bool _useGravity);
 
     void InverseDynamicBackward();
 
     Eigen::VectorXf get_Force(){return mforce;}
+
+    float get_Torque(){return mTorque;}
+
+    void set_Backward();
+
+    bool check_Backward();
+
 private:
-
-    int mnDynId;
-
     float mMass;
 
     Eigen::Matrix3f mInertia;
@@ -35,6 +37,8 @@ private:
     Eigen::VectorXf mforce{Eigen::VectorXf::Zero(6)};
 
     float mTorque{0};
+
+    int mnbackward;
 };
 
 #endif //__DYNFRAME_HPP_

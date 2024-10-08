@@ -5,9 +5,9 @@ int ActiveFrameId = 0;
 int PassiveFrameId = 0;
 
 Frame::Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype, 
-                float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent) 
+                float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent, bool _useGravity) 
                 : ma(_a), malpha(_alpha), md(_d), mtheta(_theta), mDHtype(_DHtype),
-                  mframetype(_frametype), mupperLimit(_upperLimit), mlowerLimit(_lowerLimit)
+                  mframetype(_frametype), mupperLimit(_upperLimit), mlowerLimit(_lowerLimit), mbuseGravity(_useGravity)
 {
     mnid = FrameId++;
 
@@ -37,6 +37,12 @@ Frame::Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETY
         mbase = Eigen::Matrix4f::Identity();
     }
     mq = 0;
+    if(_useGravity)
+    {
+        Eigen::VectorXf vec(6);
+        vec << 0, 0, 0, 0, 0, 10; 
+        GRAVTIY = vec;
+    }
 }
 
 Frame::~Frame()
@@ -206,13 +212,36 @@ void Frame::update2()
     
     mglobal = mbase * mlocal;
 
-    Eigen::VectorXf screw;
-    float degree;
-    mathfunction::SE3ToScrew(mglobal, screw, degree);
-    mTwists = mathfunction::adjoint(mlocal) * mpParent.lock()->get_Twists() + screw * mqd;
-    mTwistsd = mathfunction::adjoint(mlocal) * mpParent.lock()->get_Twistsd() + mathfunction::LieBracket(mTwists) * screw * mqd + screw * mqdd;
-
+    Eigen::VectorXf screw = Eigen::VectorXf::Zero(6);
+    Eigen::Matrix4f ilocal = mlocal.inverse();
+    screw(2) = 1;
+    if(isRoot())
+        mTwists = screw * mqd;
+    else
+        mTwists = mathfunction::adjoint(ilocal) * mpParent.lock()->get_Twists() + screw * mqd;
     
+    if(isRoot())
+        mTwistsd = mathfunction::adjoint(ilocal) * GRAVTIY + mathfunction::LieBracket(mTwists) * screw * mqd + screw * mqdd;
+    else
+        mTwistsd = mathfunction::adjoint(ilocal) * mpParent.lock()->get_Twistsd() + mathfunction::LieBracket(mTwists) * screw * mqd + screw * mqdd;
+#ifdef DEBUG
+    std::cout << "----------------\nid: " << mnid << std::endl;
+    std::cout << "twist\n";
+    for(int i=0; i<6; i++)
+    {
+        std::cout << mTwists(i) << "\t";
+    }
+    std::cout << "\ntwistd\n";
+    for(int i=0; i<6; i++)
+    {
+        std::cout << mTwistsd(i) << "\t";
+    }
+#endif
+    std::cout << std::endl;
+    for(auto &child : mvpChildren)
+    {
+        child->update2();
+    }
 }
 
 void Frame::set_PassiveRefFrame(float _rate, std::shared_ptr<Frame> _refFrame)
@@ -293,4 +322,15 @@ bool Frame::isRoot()
 void Frame::set_Child(std::shared_ptr<Frame> child)
 {
     mvpChildren.push_back(child);
+}
+
+int Frame::get_RefId()
+{
+    if(mpRef.lock() == nullptr)
+    {
+        std::stringstream ss;
+        ss << "frame " << mnid << "do not have reference frame" << std::endl;
+        throw std::invalid_argument(ss.str());
+    }
+    return mpRef.lock()->get_JointId() * mPassiveRate;
 }

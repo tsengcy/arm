@@ -52,6 +52,8 @@ protected:
 protected:
     std::shared_ptr<Frame> mpRoot;
 
+    std::vector<std::weak_ptr<Frame>> mvpLeaf;
+
     std::vector<std::weak_ptr<Frame>> mvpActiveFrame;
 
     std::vector<std::weak_ptr<Frame>> mvpPassiveFrame;

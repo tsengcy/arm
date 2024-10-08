@@ -66,6 +66,23 @@ target_link_libraries(test
     robotics
 )
 
-# add_executable(main2
-#     src/tmp/main2.cpp
-# )
+add_executable(main2
+    src/main2.cpp
+)
+target_link_libraries(main2
+    robotics
+)
+
+add_executable(main3
+    src/main3.cpp
+)
+target_link_libraries(main3
+    robotics
+)
+
+add_executable(main4
+    src/main4.cpp
+)
+target_link_libraries(main4
+    robotics
+)

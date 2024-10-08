@@ -61,6 +61,14 @@ RobotArm::RobotArm(std::vector<float> _va, std::vector<float> _valpha, std::vect
     }
 
     mnid = robotarmId++;
+
+    for(int i=0; i<mvpFrame.size(); i++)
+    {
+        if(mvpFrame[i].lock()->isLeaf())
+        {
+            mvpLeaf.push_back(mvpFrame[i].lock());
+        }
+    }
 #ifdef DEBUG
     std::cout << "initialize a robot arm" << std::endl;
     property();

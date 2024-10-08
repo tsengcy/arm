@@ -32,7 +32,7 @@ class Frame : public std::enable_shared_from_this<Frame>
 public:
     /** constructor of frame by using modified dh parameter */
     Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype,
-          float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent);
+          float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent, bool _useGravity = false);
     
     virtual ~Frame();
     
@@ -81,7 +81,11 @@ public:
 
     int get_JointId(){return mnJointId;}
 
+    int get_RefId();
+
     FRAMETYPE get_FrameType(){return mframetype;}
+
+    bool isLeaf(){return mvpChildren.size() == 0;}
 
     /** getter for DH parameter*/
     float get_a(){return ma;}
@@ -93,7 +97,7 @@ public:
 
     Eigen::VectorXf get_Twistsd(){return mTwistsd;}
 
-
+    std::shared_ptr<Frame> get_Parent(){return mpParent.lock();}
 
 protected:
     Eigen::Matrix4f mlocal;
@@ -123,9 +127,9 @@ protected:
 
     float mqdd{0};
 
-    Eigen::VectorXf mTwists;
+    Eigen::VectorXf mTwists{Eigen::VectorXf::Zero(6)};
 
-    Eigen::VectorXf mTwistsd;
+    Eigen::VectorXf mTwistsd{Eigen::VectorXf::Zero(6)};
 
     /** @brief joint limit */
     float mupperLimit;
@@ -140,6 +144,10 @@ protected:
 
     /** @brief pointer to parent */
     std::weak_ptr<Frame> mpParent;
+
+    bool mbuseGravity;
+
+    Eigen::VectorXf GRAVTIY{Eigen::VectorXf::Zero(6)};
 };
 
 #endif // __FRAME_HPP_
