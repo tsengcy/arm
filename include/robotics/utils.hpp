@@ -29,6 +29,8 @@ namespace mathfunction
     void SE3ToScrew(Eigen::Matrix4f SE, Eigen::VectorXf& Screw, float& theta);
     
     Eigen::Matrix3f skew(Eigen::Vector3f vec);
+
+    Eigen::Matrix4f skew(Eigen::VectorXf vec);
     
     Eigen::Vector3f nskew(Eigen::Matrix3f mat);
     

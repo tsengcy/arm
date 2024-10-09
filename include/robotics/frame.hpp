@@ -93,9 +93,11 @@ public:
     float get_alpha(){return malpha;}
     float get_theta(){return mtheta;}
 
-    Eigen::VectorXf get_Twists(){return mTwists;}
+    Eigen::VectorXf get_Twist(){return mTwist;}
 
-    Eigen::VectorXf get_Twistsd(){return mTwistsd;}
+    Eigen::VectorXf get_Twistd(){return mTwistd;}
+
+    Eigen::VectorXf get_Twistgd(){return mTwistgd;}
 
     std::shared_ptr<Frame> get_Parent(){return mpParent.lock();}
 
@@ -127,9 +129,11 @@ protected:
 
     float mqdd{0};
 
-    Eigen::VectorXf mTwists{Eigen::VectorXf::Zero(6)};
+    Eigen::VectorXf mTwist{Eigen::VectorXf::Zero(6)};
 
-    Eigen::VectorXf mTwistsd{Eigen::VectorXf::Zero(6)};
+    Eigen::VectorXf mTwistd{Eigen::VectorXf::Zero(6)};
+
+    Eigen::VectorXf mTwistgd{Eigen::VectorXf::Zero(6)};
 
     /** @brief joint limit */
     float mupperLimit;

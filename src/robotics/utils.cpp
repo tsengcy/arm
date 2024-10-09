@@ -129,6 +129,16 @@ Eigen::Matrix3f mathfunction::skew(Eigen::Vector3f vec)
     return ans;
 }
 
+Eigen::Matrix4f mathfunction::skew(Eigen::VectorXf vec)
+{
+    Eigen::Matrix4f ans = Eigen::Matrix4f::Zero();
+    ans <<       0, -vec(2),  vec(1), vec(3),
+            vec(2),       0, -vec(0), vec(4),
+           -vec(1),  vec(0),       0, vec(5),
+                 0,       0,       0,      0;
+    return ans;
+}
+
 Eigen::Vector3f mathfunction::nskew(Eigen::Matrix3f mat)
 {
     Eigen::Vector3f vec;

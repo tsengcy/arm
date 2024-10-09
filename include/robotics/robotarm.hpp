@@ -43,6 +43,14 @@ public:
 
     Eigen::VectorXf get_EEPos();
 
+    Eigen::VectorXf get_Twist();
+
+    Eigen::VectorXf get_Twistd();
+
+    Eigen::VectorXf get_GlobalTwist();
+
+    Eigen::VectorXf get_GlobalTwistd();
+
     void property();
 protected:
     int insert_Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype, float _upperLimit, float _lowerLimit, int _parentId);

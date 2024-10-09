@@ -212,6 +212,46 @@ Eigen::VectorXf RobotArm::get_EEPos()
     return Pos;
 }
 
+Eigen::VectorXf RobotArm::get_Twist()
+{
+    Eigen::VectorXf twist(mnEE * 6);
+    for(int i=0; i<mnEE; i++)
+    {
+        twist.block(6*i, 0, 6, 1) = mvpEE[i]->get_Twist();
+    }
+    return twist;
+}
+
+Eigen::VectorXf RobotArm::get_Twistd()
+{
+    Eigen::VectorXf twistd(mnEE * 6);
+    for(int i=0; i<mnEE; i++)
+    {
+        twistd.block(6*i, 0, 6, 1) = mvpEE[i]->get_Twistd();
+    }
+    return twistd;
+}
+
+Eigen::VectorXf RobotArm::get_GlobalTwist()
+{
+    Eigen::VectorXf twist(mnEE * 6);
+    for(int i=0; i<mnEE; i++)
+    {
+        twist.block(6*i, 0, 6, 1) = mvpEE[i]->get_GlobalTwist();
+    }
+    return twist;
+}
+
+Eigen::VectorXf RobotArm::get_GlobalTwistd()
+{
+    Eigen::VectorXf twistd(mnEE * 6);
+    for(int i=0; i<mnEE; i++)
+    {
+        twistd.block(6*i, 0, 6, 1) = mvpEE[i]->get_GlobalTwistd();
+    }
+    return twistd;
+}
+
 int RobotArm::insert_Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype, float _upperLimit, float _lowerLimit, int _parentId)
 {
     int id;

@@ -40,7 +40,7 @@ Frame::Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETY
     if(_useGravity)
     {
         Eigen::VectorXf vec(6);
-        vec << 0, 0, 0, 0, 0, 10; 
+        vec << 0, 0, 0, 0, 0, 9.81; 
         GRAVTIY = vec;
     }
 }
@@ -216,25 +216,31 @@ void Frame::update2()
     Eigen::Matrix4f ilocal = mlocal.inverse();
     screw(2) = 1;
     if(isRoot())
-        mTwists = screw * mqd;
+        mTwist = screw * mqd;
     else
-        mTwists = mathfunction::adjoint(ilocal) * mpParent.lock()->get_Twists() + screw * mqd;
+        mTwist = mathfunction::adjoint(ilocal) * mpParent.lock()->get_Twist() + screw * mqd;
     
     if(isRoot())
-        mTwistsd = mathfunction::adjoint(ilocal) * GRAVTIY + mathfunction::LieBracket(mTwists) * screw * mqd + screw * mqdd;
+    {
+        mTwistgd = mathfunction::adjoint(ilocal) * GRAVTIY;
+        mTwistd = mathfunction::LieBracket(mTwist) * screw * mqd + screw * mqdd;
+    }
     else
-        mTwistsd = mathfunction::adjoint(ilocal) * mpParent.lock()->get_Twistsd() + mathfunction::LieBracket(mTwists) * screw * mqd + screw * mqdd;
+    {
+        mTwistgd = mathfunction::adjoint(ilocal) * mpParent.lock()->get_Twistgd();
+        mTwistd = mathfunction::adjoint(ilocal) * mpParent.lock()->get_Twistd() + mathfunction::LieBracket(mTwist) * screw * mqd + screw * mqdd;
+    }
 #ifdef DEBUG
     std::cout << "----------------\nid: " << mnid << std::endl;
     std::cout << "twist\n";
     for(int i=0; i<6; i++)
     {
-        std::cout << mTwists(i) << "\t";
+        std::cout << mTwist(i) << "\t";
     }
     std::cout << "\ntwistd\n";
     for(int i=0; i<6; i++)
     {
-        std::cout << mTwistsd(i) << "\t";
+        std::cout << mTwistd(i) << "\t";
     }
 #endif
     std::cout << std::endl;

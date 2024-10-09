@@ -29,8 +29,8 @@ int main()
 
     // std::cout << Frame::
     Eigen::VectorXf q(2), qd(2), qdd(2);
-    q << 0, 0;
-    qd << 0, 0;
+    q << M_PI/2, 0;
+    qd << 0, 1;
     qdd << 0, 0;
     // angle << 0, 0;
     // rbt->set_q(angle);
@@ -54,6 +54,9 @@ int main()
 
     std::cout << "torque:\n" << torque << std::endl;
 
+    std::cout << "pose\n" << rbt->get_EEPose() << std::endl;
+    std::cout << "twist\n" << rbt->get_GlobalTwist() << std::endl;
+    std::cout << "twistd\n" << rbt->get_GlobalTwistd() << std::endl;
     delete(rbt);
 
     
