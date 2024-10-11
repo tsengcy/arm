@@ -57,7 +57,22 @@ Frame::~Frame()
 void Frame::set_q(float _angle)
 {
     if(mframetype == FRAMETYPE::ACTIVE)
+    {
+        // if(_angle > mupperLimit)
+        // {
+        //     _angle = mupperLimit;
+        //     mq = _angle;
+        // }
+        // else if(_angle < mlowerLimit)
+        // {
+        //     _angle = mlowerLimit;
+        //     mq = _angle;
+        // }
+        // else
+        // {
         mq = _angle;
+    }
+        
     else
     {
         std::stringstream ss;
@@ -339,4 +354,41 @@ int Frame::get_RefId()
         throw std::invalid_argument(ss.str());
     }
     return mpRef.lock()->get_JointId() * mPassiveRate;
+}
+
+Eigen::Vector3f Frame::get_JacobainPos(Eigen::Vector3f _pos)
+{
+    return mPassiveRate * mglobal.block<3,1>(0,2).cross(_pos - mglobal.block<3,1>(0,3));
+}
+
+Eigen::VectorXf Frame::get_JacobainPosOri(Eigen::Vector3f _pos)
+{
+    Eigen::VectorXf vJacobain(6);
+    vJacobain.block<3,1>(0,0) = mglobal.block<3,1>(0,2);
+    vJacobain.block<3,1>(3,0) = mglobal.block<3,1>(0,2).cross(_pos - mglobal.block<3,1>(0,3));
+
+    return mPassiveRate * vJacobain;
+}
+
+int Frame::get_RefFrameId()
+{
+    if(mframetype != FRAMETYPE::PASSIVE)
+    {
+        std::stringstream ss;
+        ss << "frame " << mnid << " is not a passive frame, do not have a ref frame.\n";
+        throw std::invalid_argument(ss.str());
+    }
+    return mpRef.lock()->get_JointId();
+}
+
+void Frame::checkq(float& _q)
+{
+    if(_q > mupperLimit)
+    {
+        _q = mupperLimit; 
+    }
+    else if(_q < mlowerLimit)
+    {
+        _q = mlowerLimit;
+    }
 }

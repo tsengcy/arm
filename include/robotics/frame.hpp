@@ -85,6 +85,8 @@ public:
 
     FRAMETYPE get_FrameType(){return mframetype;}
 
+    int get_RefFrameId();
+
     bool isLeaf(){return mvpChildren.size() == 0;}
 
     /** getter for DH parameter*/
@@ -101,6 +103,12 @@ public:
 
     std::shared_ptr<Frame> get_Parent(){return mpParent.lock();}
 
+    Eigen::Vector3f get_JacobainPos(Eigen::Vector3f _pos);
+
+    Eigen::VectorXf get_JacobainPosOri(Eigen::Vector3f _pos);
+    
+    void checkq(float& _q);
+
 protected:
     Eigen::Matrix4f mlocal;
     Eigen::Matrix4f mglobal;
@@ -114,7 +122,7 @@ protected:
 
     /** @brief reference frame */
     std::weak_ptr<Frame> mpRef;
-    float mPassiveRate;
+    float mPassiveRate{1};
     
     /** @brief DH parameter */
     const float ma;

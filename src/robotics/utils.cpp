@@ -176,3 +176,38 @@ Eigen::MatrixXf mathfunction::LieBracket(Eigen::VectorXf v1)
 
     return ad;
 }
+
+#define EPOSILON 1E-4
+
+Eigen::MatrixXf mathfunction::pseudoInverse(Eigen::MatrixXf mat)
+{
+    int row = mat.rows();
+    int col = mat.cols();
+
+    if(row > col)
+    {
+        float manipulability = (mat.transpose() * mat).determinant();
+        // std::cout << "----\n" << (mat.transpose() * mat) << "\n--" << std::endl;
+        if(manipulability < EPOSILON)
+        {
+            // std::cout << "----\n" << (mat.transpose() * mat + Eigen::MatrixXf::Identity(col, col) * EPOSILON).inverse() << "\n--" << std::endl;
+            return (mat.transpose() * mat + Eigen::MatrixXf::Identity(col, col) * EPOSILON).inverse() * mat.transpose();
+        }
+        else
+        {
+            return (mat.transpose() * mat).inverse() * mat.transpose();
+        }
+    }
+    else
+    {
+        float manipulability = (mat * mat.transpose()).determinant();
+        if(manipulability < EPOSILON)
+        {
+            return mat.transpose() * (mat * mat.transpose() + Eigen::MatrixXf::Identity(row, row) * EPOSILON).inverse();
+        }
+        else
+        {
+            return mat.transpose() * (mat * mat.transpose()).inverse();
+        }
+    }
+}

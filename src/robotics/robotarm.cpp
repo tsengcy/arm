@@ -75,9 +75,27 @@ RobotArm::RobotArm(std::vector<float> _va, std::vector<float> _valpha, std::vect
 #endif
 }
 
-void RobotArm::set_q(Eigen::VectorXf _q)
+void RobotArm::set_q(Eigen::VectorXf& _q)
 {
-    set_q(mathfunction::EigenVectorToStdVector(_q));
+    // set_q(mathfunction::EigenVectorToStdVector(_q));
+    if(_q.rows() != mnDoF)
+    {
+        std::stringstream ss;
+        ss << "wrong size of angle vector, expect " << mnDoF << "; but given " << _q.size() << std::endl;
+        throw std::invalid_argument(ss.str());
+    }
+
+    for(int i=0; i<mvpActiveFrame.size(); i++)
+    {
+        mvpActiveFrame[i].lock()->set_q(_q(i));
+    }
+
+    for(int i=0; i<mvpPassiveFrame.size(); i++)
+    {
+        mvpPassiveFrame[i].lock()->set_q();
+    }
+
+    mpRoot->update();
 }
 
 void RobotArm::set_q(std::vector<float> _q)
@@ -308,5 +326,117 @@ void RobotArm::property()
     std::cout << "+----------------------------+" << std::endl;
 }
 
+Eigen::MatrixXf RobotArm::get_JacobainPos()
+{
+    Eigen::MatrixXf J = Eigen::MatrixXf::Zero(3*mnEE, mnDoF);
 
+    for(int i=0; i<mnEE; i++)
+    {
+        Eigen::Vector3f eePos = mvpEE[i]->get_GlobalPos();
+        for(int j=0; j<mnDoF; j++)
+        {
+            J.block<3,1>(3*i,j) = mvpActiveFrame[j].lock()->get_JacobainPos(eePos);
+        }
 
+        for(int j=0; j<mvpPassiveFrame.size(); j++)
+        {
+            int refId = mvpPassiveFrame[j].lock()->get_RefFrameId();
+            J.block<3,1>(3*i, refId) += mvpPassiveFrame[j].lock()->get_JacobainPos(eePos);
+        }
+    }
+
+    return J;
+}
+
+Eigen::MatrixXf RobotArm::get_JacobainPosOri()
+{
+    Eigen::MatrixXf J = Eigen::MatrixXf::Zero(6*mnEE, mnDoF);
+
+    for(int i=0; i<mnEE; i++)
+    {
+        Eigen::Vector3f eePos = mvpEE[i]->get_GlobalPos();
+        for(int j=0; j<mnDoF; j++)
+        {
+            J.block<6,1>(6*i,j) = mvpActiveFrame[j].lock()->get_JacobainPosOri(eePos);
+        }
+
+        for(int j=0; j<mvpPassiveFrame.size(); j++)
+        {
+            int refId = mvpPassiveFrame[j].lock()->get_RefFrameId();
+            J.block<6,1>(6*i, refId) += mvpPassiveFrame[j].lock()->get_JacobainPosOri(eePos);
+        }
+    }
+
+    return J;
+}
+
+#define IK_MAXIMUM_ITERATION 1000
+#define IK_POS_ERROR 0.001
+#define IK_WEIGHT 0.001
+
+Eigen::VectorXf RobotArm::IK_Pos(Eigen::VectorXf _eePos)
+{
+    //check the size of ee
+    if(_eePos.rows() != mnEE * 3)
+    {
+        throw std::invalid_argument("the given end effector pos is wrong");
+    }
+
+    Eigen::VectorXf error = _eePos - get_EEPos();
+    Eigen::VectorXf angle = get_Activeq();
+    int iter = 0;
+    while(error.norm() > IK_POS_ERROR && iter < IK_MAXIMUM_ITERATION)
+    {
+        Eigen::MatrixXf J = get_JacobainPos();
+        Eigen::VectorXf dq = mathfunction::pseudoInverse(J) * error;
+
+        angle = angle + dq;
+
+        for(int i=0; i<mvpActiveFrame.size(); i++)
+        {
+            mvpActiveFrame[i].lock()->checkq(angle(i));
+        }
+        set_q(angle);
+        error = _eePos - get_EEPos();
+        iter++;
+    }
+#ifdef DEBUG
+        std::cout << "solve IK with " << iter+1 << " iteration.\n";
+        std::cout << "error: " << error.norm() << std::endl;
+#endif
+
+    return angle;
+} 
+
+Eigen::VectorXf RobotArm::IK_PosOri(Eigen::VectorXf _eePosOri)
+{
+    if(_eePosOri.rows() != mnEE * 6)
+    {
+        throw std::invalid_argument("the given end effector pos is wrong");
+    }
+
+    Eigen::VectorXf error = _eePosOri - get_EEPosOri();
+    Eigen::VectorXf angle = get_Activeq();
+    int iter = 0;
+    while(error.norm() > IK_POS_ERROR && iter < IK_MAXIMUM_ITERATION)
+    {
+        Eigen::MatrixXf J = get_JacobainPosOri();
+        Eigen::VectorXf dq = mathfunction::pseudoInverse(J) * error;
+
+        angle = angle + dq;
+
+        for(int i=0; i<mvpActiveFrame.size(); i++)
+        {
+            mvpActiveFrame[i].lock()->checkq(angle(i));
+        }
+        set_q(angle);
+        error = _eePosOri - get_EEPosOri();
+        iter++;
+    }
+#ifdef DEBUG
+        std::cout << "solve IK with " << iter+1 << " iteration.\n";
+        std::cout << "error: " << error.norm() << std::endl;
+#endif
+
+    return angle;
+} 

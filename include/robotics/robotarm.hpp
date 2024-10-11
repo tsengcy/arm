@@ -18,7 +18,7 @@ public:
             std::vector<float> _vupperLimit, std::vector<float> _vlowerLimit, std::vector<int> _vparentId, DH _DHtype,
             std::vector<FRAMETYPE> _vFrametype, std::vector<Eigen::Matrix4f> _vTFrame2EE, std::vector<int> _vEEparent);
 
-    void set_q(Eigen::VectorXf _q);
+    void set_q(Eigen::VectorXf& _q);
 
     void set_q(std::vector<float> _q);
 
@@ -51,11 +51,22 @@ public:
 
     Eigen::VectorXf get_GlobalTwistd();
 
+
+    // Eigen::VectorXf IK_Pose(Eigen::MatrixXf _eePose);
+
+    Eigen::VectorXf IK_Pos(Eigen::VectorXf _eePos);
+
+    Eigen::VectorXf IK_PosOri(Eigen::VectorXf _eePosOri);
+
     void property();
 protected:
     int insert_Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype, float _upperLimit, float _lowerLimit, int _parentId);
 
     void insert_endeffector(Eigen::Matrix4f _TFrame2EE, int _EEparent);
+
+    Eigen::MatrixXf get_JacobainPos();
+
+    Eigen::MatrixXf get_JacobainPosOri();
 
 protected:
     std::shared_ptr<Frame> mpRoot;

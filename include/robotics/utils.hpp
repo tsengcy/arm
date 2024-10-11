@@ -39,6 +39,8 @@ namespace mathfunction
     Eigen::MatrixXf adjoint(Eigen::Matrix4f Pose);
     
     Eigen::MatrixXf LieBracket(Eigen::VectorXf v1);
+
+    Eigen::MatrixXf pseudoInverse(Eigen::MatrixXf mat);
 };
 
 #endif // __UTILS_HPP_
