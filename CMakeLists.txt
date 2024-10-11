@@ -93,3 +93,17 @@ add_executable(main5
 target_link_libraries(main5
     robotics
 )
+
+add_executable(main6
+    src/main6.cpp
+)
+target_link_libraries(main6
+    robotics
+)
+
+add_executable(main7
+    src/main7.cpp
+)
+target_link_libraries(main7
+    robotics
+)

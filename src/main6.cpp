@@ -35,46 +35,21 @@ int main()
     Eigen::VectorXf q(2), qd(2), qdd(2);
     q << 0, 0;
     qd << 0, 0;
-    qdd << 0, 0;
+    qdd << 0, 10;
     // angle << 0, 0;
     // rbt->set_q(angle);
 
     // std::cout << "posse\n" << rbt->get_EEPose() << std::endl;
-
-    // Eigen::VectorXf force(6);
-    // force << 0, 0, 1, 0, -0.5, 0;
-    // int id = 1;
-    // Eigen::Vector3f forcePos;
-    // forcePos << L2, 0, 0;
-
-    // std::vector<Eigen::VectorXf> externalForce{force};
-    // std::vector<int> externalForceId{id};
-    // std::vector<Eigen::Vector3f> externalForcePos{forcePos};
-
-    
-
-    // rbt->Inverse_Dynamic(q, qd, qdd, externalForce, externalForcePos, externalForceId);
     rbt->setGravity(true);
     rbt->Inverse_Dynamic(q, qd, qdd);
     // rbt->property();
-    std::cout << "Torque:\n" << rbt->get_Torque() << std::endl;
+    Eigen::VectorXf torque = rbt->get_Torque();
+    std::cout << "Torque:\n" << torque << std::endl;
 
-    // std::cout << "Pose: \n" << rbt->get_EEPose() << std::endl;
+    rbt->Forward_Dynamic(q, qd, torque);
 
-    Eigen::Vector2f torque = Eigen::Vector2f::Zero();
+    std::cout << "acceleration\n" << rbt->get_qdd() << std::endl;
 
-    torque(0) = (vmass[0] * L1 * L1 + vmass[1]*(L1 * L1 + 2 * L1 * L2 * cos(q(1)) + L2 * 2)) * qdd(0) +
-                vmass[1] * (L1 * L2 * cos(q[1]) + L2 * L2) * qdd(1) - vmass[1] * L1 * L2 * sin(q(1)) * (2 * qd(0) * qd(1) + qd(1) * qd(1)) +
-                (vmass[1] + vmass[0]) * L1 * 10 * cos(q[0]) + vmass[1] * 10 * L2 * cos(q(0) + q(1));
-    
-    torque(1) = vmass[1] * (L1 * L2 * cos(q(1)) + L2 * L2) * qdd(0) + vmass[1] * L2 * L2 * qdd(1) + vmass[1] * L1 * L2 * qd(0) * qd(0) * sin(q(1)) +
-                vmass[1] * 10 * L2 * cos(q(1) + q(0));
-
-    std::cout << "torque:\n" << torque << std::endl;
-
-    // std::cout << "pose\n" << rbt->get_EEPose() << std::endl;
-    // std::cout << "twist\n" << rbt->get_GlobalTwist() << std::endl;
-    // std::cout << "twistd\n" << rbt->get_GlobalTwistd() << std::endl;
     delete(rbt);
 
     

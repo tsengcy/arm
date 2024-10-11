@@ -74,3 +74,12 @@ Eigen::VectorXf EndEffector::get_GlobalTwistd()
     return vec;
 }
 
+void EndEffector::get_JacobainPos(Eigen::MatrixXf& J, Eigen::Vector3f _pos)
+{
+    mpFrame.lock()->get_JacobainPos(J, _pos);
+}
+
+void EndEffector::get_JacobainPosOri(Eigen::MatrixXf& J, Eigen::Vector3f _pos)
+{
+    mpFrame.lock()->get_JacobainPosOri(J, _pos);
+}

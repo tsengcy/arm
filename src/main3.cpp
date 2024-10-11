@@ -24,7 +24,7 @@ int main()
     std::vector<Eigen::Matrix3f> vInertia{inertia};
 
     dynRobotArm* rbt = new dynRobotArm(a, alpha, d, theta, upper, lower, parentId, 
-                                       DH::MODIFIED, frametype, vmass, vInertia, vTCOM, vtrans, eeparent, true);
+                                       DH::MODIFIED, frametype, vmass, vInertia, vTCOM, vtrans, eeparent);
     std::cout << "finish initialize\n";
 
     // std::cout << Frame::

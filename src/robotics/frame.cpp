@@ -5,9 +5,9 @@ int ActiveFrameId = 0;
 int PassiveFrameId = 0;
 
 Frame::Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype, 
-                float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent, bool _useGravity) 
+                float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent) 
                 : ma(_a), malpha(_alpha), md(_d), mtheta(_theta), mDHtype(_DHtype),
-                  mframetype(_frametype), mupperLimit(_upperLimit), mlowerLimit(_lowerLimit), mbuseGravity(_useGravity)
+                  mframetype(_frametype), mupperLimit(_upperLimit), mlowerLimit(_lowerLimit)
 {
     mnid = FrameId++;
 
@@ -37,12 +37,6 @@ Frame::Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETY
         mbase = Eigen::Matrix4f::Identity();
     }
     mq = 0;
-    if(_useGravity)
-    {
-        Eigen::VectorXf vec(6);
-        vec << 0, 0, 0, 0, 0, 0; 
-        GRAVTIY = vec;
-    }
 }
 
 Frame::~Frame()
@@ -245,20 +239,7 @@ void Frame::update2()
         mTwistgd = mathfunction::adjoint(ilocal) * mpParent.lock()->get_Twistgd();
         mTwistd = mathfunction::adjoint(ilocal) * mpParent.lock()->get_Twistd() + mathfunction::LieBracket(mTwist) * screw * mqd + screw * mqdd;
     }
-#ifdef DEBUG
-    std::cout << "----------------\nid: " << mnid << std::endl;
-    std::cout << "twist\n";
-    for(int i=0; i<6; i++)
-    {
-        std::cout << mTwist(i) << "\t";
-    }
-    std::cout << "\ntwistd\n";
-    for(int i=0; i<6; i++)
-    {
-        std::cout << mTwistd(i) << "\t";
-    }
-#endif
-    std::cout << std::endl;
+    
     for(auto &child : mvpChildren)
     {
         child->update2();
@@ -356,20 +337,6 @@ int Frame::get_RefId()
     return mpRef.lock()->get_JointId() * mPassiveRate;
 }
 
-Eigen::Vector3f Frame::get_JacobainPos(Eigen::Vector3f _pos)
-{
-    return mPassiveRate * mglobal.block<3,1>(0,2).cross(_pos - mglobal.block<3,1>(0,3));
-}
-
-Eigen::VectorXf Frame::get_JacobainPosOri(Eigen::Vector3f _pos)
-{
-    Eigen::VectorXf vJacobain(6);
-    vJacobain.block<3,1>(0,0) = mglobal.block<3,1>(0,2);
-    vJacobain.block<3,1>(3,0) = mglobal.block<3,1>(0,2).cross(_pos - mglobal.block<3,1>(0,3));
-
-    return mPassiveRate * vJacobain;
-}
-
 int Frame::get_RefFrameId()
 {
     if(mframetype != FRAMETYPE::PASSIVE)
@@ -390,5 +357,58 @@ void Frame::checkq(float& _q)
     else if(_q < mlowerLimit)
     {
         _q = mlowerLimit;
+    }
+}
+
+void Frame::setGravity(bool _useGravity)
+{
+    mbuseGravity = _useGravity;
+    if(_useGravity)
+    {
+        Eigen::VectorXf vec(6);
+        vec << 0, 0, 0, 0, 0, 10; 
+        GRAVTIY = vec;
+    }
+    else
+    {
+        GRAVTIY = Eigen::VectorXf::Zero(6);
+    }
+}
+
+void Frame::get_JacobainPosOri(Eigen::MatrixXf& J, Eigen::Vector3f _pos)
+{
+    if(mframetype == FRAMETYPE::ACTIVE)
+    {
+        J.block<3,1>(0, mnid) += mglobal.block<3,1>(0,2);
+        J.block<3,1>(3, mnid) += mglobal.block<3,1>(0,2).cross(_pos - mglobal.block<3,1>(0,3));
+    }
+    else if(mframetype == FRAMETYPE::PASSIVE)
+    {
+        int id = mpRef.lock()->get_JointId();
+        J.block<3,1>(0, id) += mPassiveRate * mglobal.block<3,1>(0,2);
+        J.block<3,1>(3, id) += mPassiveRate * mglobal.block<3,1>(0,2).cross(_pos - mglobal.block<3,1>(0,3));
+    }
+
+    if(!isRoot())
+    {
+        mpParent.lock()->get_JacobainPosOri(J, _pos);
+    }
+}
+
+void Frame::get_JacobainPos(Eigen::MatrixXf& J, Eigen::Vector3f _pos)
+{
+    if(mframetype == FRAMETYPE::ACTIVE)
+    {
+        J.block<3,1>(0, mnid) += mglobal.block<3,1>(0,2).cross(_pos - mglobal.block<3,1>(0,3));
+    }
+    else if(mframetype == FRAMETYPE::PASSIVE)
+    {
+        int id = mpRef.lock()->get_JointId();
+        J.block<3,1>(0, id) += mPassiveRate * mglobal.block<3,1>(0,2).cross(_pos - mglobal.block<3,1>(0,3));
+    }
+
+    if(!isRoot())
+    {
+        mpParent.lock()->get_JacobainPosOri(J, _pos);
     }
 }

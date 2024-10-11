@@ -29,6 +29,10 @@ public:
 
     int get_Id(){return mnid;}
 
+    void get_JacobainPos(Eigen::MatrixXf& J, Eigen::Vector3f _pos);
+
+    void get_JacobainPosOri(Eigen::MatrixXf& J, Eigen::Vector3f _pos);
+
 private:
     void update();
 

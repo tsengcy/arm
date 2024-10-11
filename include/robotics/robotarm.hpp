@@ -37,6 +37,18 @@ public:
 
     Eigen::VectorXf get_q();
 
+    Eigen::VectorXf get_Activeqd();
+
+    Eigen::VectorXf get_Passiveqd();
+
+    Eigen::VectorXf get_qd();
+
+    Eigen::VectorXf get_Activeqdd();
+
+    Eigen::VectorXf get_Passiveqdd();
+
+    Eigen::VectorXf get_qdd();
+
     Eigen::MatrixXf get_EEPose();
 
     Eigen::VectorXf get_EEPosOri();
@@ -57,6 +69,8 @@ public:
     Eigen::VectorXf IK_Pos(Eigen::VectorXf _eePos);
 
     Eigen::VectorXf IK_PosOri(Eigen::VectorXf _eePosOri);
+
+    void setGravity(bool _useGravity);
 
     void property();
 protected:

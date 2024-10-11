@@ -32,7 +32,7 @@ class Frame : public std::enable_shared_from_this<Frame>
 public:
     /** constructor of frame by using modified dh parameter */
     Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype,
-          float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent, bool _useGravity = false);
+          float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent);
     
     virtual ~Frame();
     
@@ -102,12 +102,16 @@ public:
     Eigen::VectorXf get_Twistgd(){return mTwistgd;}
 
     std::shared_ptr<Frame> get_Parent(){return mpParent.lock();}
-
-    Eigen::Vector3f get_JacobainPos(Eigen::Vector3f _pos);
-
-    Eigen::VectorXf get_JacobainPosOri(Eigen::Vector3f _pos);
     
+    void get_JacobainPosOri(Eigen::MatrixXf& J, Eigen::Vector3f _pos);
+
+    void get_JacobainPos(Eigen::MatrixXf& J, Eigen::Vector3f _pos);
+
     void checkq(float& _q);
+
+    void setGravity(bool _useGravity);
+
+    Eigen::VectorXf getGravity(){return GRAVTIY;}
 
 protected:
     Eigen::Matrix4f mlocal;

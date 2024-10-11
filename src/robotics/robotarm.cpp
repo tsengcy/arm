@@ -200,6 +200,66 @@ Eigen::VectorXf RobotArm::get_q()
     return angle;
 }
 
+Eigen::VectorXf RobotArm::get_Activeqd()
+{
+    Eigen::VectorXf qd(mnDoF);
+    for(int i=0; i<mnDoF; i++)
+    {
+        qd(i) = mvpActiveFrame[i].lock()->get_qd();
+    }
+    return qd;
+}
+
+Eigen::VectorXf RobotArm::get_Passiveqd()
+{
+    Eigen::VectorXf qd(mnPassiveDoF);
+    for(int i=0; i<mnPassiveDoF; i++)
+    {
+        qd(i) = mvpPassiveFrame[i].lock()->get_qd();
+    }
+    return qd;
+}
+
+Eigen::VectorXf RobotArm::get_qd()
+{
+    Eigen::VectorXf qd(mvpFrame.size());
+    for(int i=0; i<mvpFrame.size(); i++)
+    {
+        qd(i) = mvpFrame[i].lock()->get_qd();
+    }
+    return qd;
+}
+
+Eigen::VectorXf RobotArm::get_Activeqdd()
+{
+    Eigen::VectorXf qdd(mnDoF);
+    for(int i=0; i<mnDoF; i++)
+    {
+        qdd(i) = mvpActiveFrame[i].lock()->get_qdd();
+    }
+    return qdd;
+}
+
+Eigen::VectorXf RobotArm::get_Passiveqdd()
+{
+    Eigen::VectorXf qdd(mnPassiveDoF);
+    for(int i=0; i<mnPassiveDoF; i++)
+    {
+        qdd(i) = mvpPassiveFrame[i].lock()->get_qdd();
+    }
+    return qdd;
+}
+
+Eigen::VectorXf RobotArm::get_qdd()
+{
+    Eigen::VectorXf qdd(mvpFrame.size());
+    for(int i=0; i<mvpFrame.size(); i++)
+    {
+        qdd(i) = mvpFrame[i].lock()->get_qdd();
+    }
+    return qdd;
+}
+
 Eigen::MatrixXf RobotArm::get_EEPose()
 {
     Eigen::MatrixXf pose(mnEE * 4, 4);
@@ -332,17 +392,10 @@ Eigen::MatrixXf RobotArm::get_JacobainPos()
 
     for(int i=0; i<mnEE; i++)
     {
+        Eigen::MatrixXf Jsub = Eigen::MatrixXf::Zero(3, mnDoF);
         Eigen::Vector3f eePos = mvpEE[i]->get_GlobalPos();
-        for(int j=0; j<mnDoF; j++)
-        {
-            J.block<3,1>(3*i,j) = mvpActiveFrame[j].lock()->get_JacobainPos(eePos);
-        }
-
-        for(int j=0; j<mvpPassiveFrame.size(); j++)
-        {
-            int refId = mvpPassiveFrame[j].lock()->get_RefFrameId();
-            J.block<3,1>(3*i, refId) += mvpPassiveFrame[j].lock()->get_JacobainPos(eePos);
-        }
+        mvpEE[i]->get_JacobainPos(Jsub, eePos);
+        J.block(i*3, 0, 3,mnDoF) = Jsub;
     }
 
     return J;
@@ -354,17 +407,10 @@ Eigen::MatrixXf RobotArm::get_JacobainPosOri()
 
     for(int i=0; i<mnEE; i++)
     {
+        Eigen::MatrixXf Jsub = Eigen::MatrixXf::Zero(6, mnDoF);
         Eigen::Vector3f eePos = mvpEE[i]->get_GlobalPos();
-        for(int j=0; j<mnDoF; j++)
-        {
-            J.block<6,1>(6*i,j) = mvpActiveFrame[j].lock()->get_JacobainPosOri(eePos);
-        }
-
-        for(int j=0; j<mvpPassiveFrame.size(); j++)
-        {
-            int refId = mvpPassiveFrame[j].lock()->get_RefFrameId();
-            J.block<6,1>(6*i, refId) += mvpPassiveFrame[j].lock()->get_JacobainPosOri(eePos);
-        }
+        mvpEE[i]->get_JacobainPosOri(Jsub, eePos);
+        J.block(i*6, 0, 6, mnDoF) = Jsub;
     }
 
     return J;
@@ -440,3 +486,12 @@ Eigen::VectorXf RobotArm::IK_PosOri(Eigen::VectorXf _eePosOri)
 
     return angle;
 } 
+
+void RobotArm::setGravity(bool _useGravity)
+{
+    for(int i=0; i<mvpFrame.size(); i++)
+    {
+        mvpFrame[i].lock()->setGravity(_useGravity);
+    }
+    mpRoot->update2();
+}

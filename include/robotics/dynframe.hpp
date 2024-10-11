@@ -12,7 +12,7 @@ class dynFrame : public Frame
 public:
     dynFrame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETYPE _frametype,
              float _upperLimit, float _lowerLimit, std::shared_ptr<Frame> _parent,
-             float _mass, Eigen::Matrix3f _inertia, Eigen::Matrix4f _TCOM, bool _useGravity);
+             float _mass, Eigen::Matrix3f _inertia, Eigen::Matrix4f _TCOM);
 
     void InverseDynamicBackward();
 
