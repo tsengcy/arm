@@ -18,7 +18,8 @@ public:
 
     void Forward_Dynamic();
 
-    void Inverse_Dynamic(Eigen::VectorXf _q, Eigen::VectorXf _qd, Eigen::VectorXf _qdd);
+    void Inverse_Dynamic(Eigen::VectorXf _q, Eigen::VectorXf _qd, Eigen::VectorXf _qdd,
+                         std::vector<Eigen::VectorXf> _externalForce = std::vector<Eigen::VectorXf>(), std::vector<Eigen::Vector3f> _externalForcePose = std::vector<Eigen::Vector3f>(), std::vector<int> _externalForceId = std::vector<int>());
 
     Eigen::VectorXf get_Torque();
 private:

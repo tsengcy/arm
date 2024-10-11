@@ -40,7 +40,7 @@ Frame::Frame(float _a, float _alpha, float _d, float _theta, DH _DHtype, FRAMETY
     if(_useGravity)
     {
         Eigen::VectorXf vec(6);
-        vec << 0, 0, 0, 0, 0, 9.81; 
+        vec << 0, 0, 0, 0, 0, 0; 
         GRAVTIY = vec;
     }
 }

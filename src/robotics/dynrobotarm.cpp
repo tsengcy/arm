@@ -98,12 +98,28 @@ void dynRobotArm::insert_DynFrame(float _a, float _alpha, float _d, float _theta
         RobotArm::mnPassiveDoF++;
 }
 
-void dynRobotArm::Inverse_Dynamic(Eigen::VectorXf _q, Eigen::VectorXf _qd, Eigen::VectorXf _qdd)
+void dynRobotArm::Inverse_Dynamic(Eigen::VectorXf _q, Eigen::VectorXf _qd, Eigen::VectorXf _qdd, std::vector<Eigen::VectorXf> _externalForce, std::vector<Eigen::Vector3f> _externalForcePos, std::vector<int> _externalForceId)
 {
+    if(_externalForce.size() != _externalForceId.size() || _externalForce.size() != _externalForcePos.size())
+    {
+        throw std::invalid_argument("wrong external force size");
+    }
     // update configure
     RobotArm::set_q(_q);
     RobotArm::set_qd(_qd);
     RobotArm::set_qdd(_qdd);
+
+    for(int i=0; i<_externalForce.size(); i++)
+    {
+        if(_externalForceId[i] >= mvpFrame.size())
+        {
+            throw std::invalid_argument("external force Id error");
+        }
+            std::shared_ptr<dynFrame> ptr = std::dynamic_pointer_cast<dynFrame>(mvpFrame[_externalForceId[i]].lock());
+            ptr->addExternalForce(_externalForce[i], _externalForcePos[i]);
+    }
+
+    
 
     // forward
     mpRoot->update2();

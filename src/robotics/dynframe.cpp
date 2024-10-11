@@ -28,9 +28,15 @@ void dynFrame::InverseDynamicBackward()
         mforce = mforce + mathfunction::adjoint(Tlocal).transpose() * nf->get_Force();
     }
 
-    // Eigen::VectorXf gf = Eigen::VectorXf(6);
-    // gf(5) = -10;
-    // Eigen::Matrix4f Tg = mglobal;
+    while(!mqExternalForce.empty())
+    {
+        std::pair<Eigen::VectorXf, Eigen::Vector3f> externalforce = mqExternalForce.front();
+        mqExternalForce.pop();
+        
+        mforce -= externalforce.first;
+
+        mforce.block<3,1>(0,0) -= externalforce.second.cross(externalforce.first.block<3,1>(3,0));
+    }
 
     mforce = mforce + mSpatialInertia * (Frame::mTwistd + Frame::mTwistgd) - mathfunction::LieBracket(Frame::mTwist).transpose() * (mSpatialInertia * Frame::mTwist);
     mTorque = mforce.dot(screw);

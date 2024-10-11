@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <queue>
 
 class dynFrame : public Frame
 {
@@ -23,6 +24,8 @@ public:
 
     bool check_Backward();
 
+    void addExternalForce(Eigen::VectorXf _force, Eigen::Vector3f _forcePos){mqExternalForce.push({_force, _forcePos});}
+
 private:
     float mMass;
 
@@ -35,6 +38,8 @@ private:
     int visited{0};
 
     Eigen::VectorXf mforce{Eigen::VectorXf::Zero(6)};
+
+    std::queue<std::pair<Eigen::VectorXf, Eigen::Vector3f>> mqExternalForce;
 
     float mTorque{0};
 
